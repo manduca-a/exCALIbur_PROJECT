@@ -4,6 +4,10 @@ import warnings
 
 from datetime import datetime
 
+import json
+import os
+from typing import Type
+
 from excalibur.crew import Excalibur
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
@@ -18,8 +22,18 @@ def run():
     Run the crew.
     """
 
+    with open('ambulances.json', 'r') as file:
+            ambulances_data = json.load(file)
+            
+    ambulances_data_str = {
+        amb["name"]: f"{amb['coordinates']['lat']},{amb['coordinates']['lng']}"
+        for amb in ambulances_data["ambulances"]
+        if amb["state"] == "available"
+    }
+
     inputs = {
-        'call_transcription': "Sono al Viale delle Scienze all'Unical, mi fa male la gamba"
+        'call_transcription': "Sono a scarro, mi fa male la gamba",
+        'ambulances': json.dumps(ambulances_data_str)
     }
 
     try:

@@ -1,0 +1,18 @@
+{
+    "hospitals": [
+        {
+            "name": "Ospedale Annunziata",
+            "address": "123 Main St, Anytown, USA",
+            "capacity": 100,
+            "current_patients": 80,
+            "specialties": ["Cardiology", "Neurology", "Orthopedics"]
+        },
+        {
+            "name": "Centro Sanitario Unical",
+            "address": "456 Elm St, Anytown, USA",
+            "capacity": 150,
+            "current_patients": 120,
+            "specialties": ["Pediatrics", "Oncology", "Emergency Medicine"]
+        }
+    ]
+}

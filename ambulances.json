@@ -1,0 +1,22 @@
+{
+  "ambulances": [
+    {
+      "id": 1,
+      "name": "Ambulance 1",
+      "coordinates": {
+        "lat": 39.35055330565161,
+        "lng": 16.246699439904933
+      },
+      "state": "available"
+    },
+    {
+      "id": 2,
+      "name": "Ambulance 2",
+      "coordinates": {
+        "lat": 39.358583134816925,
+        "lng": 16.23734429272705
+      },
+      "state": "available"
+    }
+  ]
+}
