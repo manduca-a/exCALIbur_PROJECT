@@ -18,3 +18,5 @@ analysis_task:
     - Special Requirements: [any specific needs]
     - Call Summary: [brief assessment]
   agent: analyzer
+
+  # TODO: add more tasks for the other agents (actor, ambulance locator, hospital locator)

@@ -28,11 +28,24 @@ class Excalibur():
     # To learn more about structured task outputs,
     # task dependencies, and task callbacks, check out the documentation:
     # https://docs.crewai.com/concepts/tasks#overview-of-a-task
+
+    # TODO: add an agent that act like an actor, so from given addresses and symptoms, it "call" the hospital to ask for help
+
+    # TODO: add an agent that, given the patient's adddress, looks for the nearest ambulance in the map
+
+    # TODO: add am agent that, given the patient's symptoms, looks for the nearest hospital with free beds and the right specialization
+
     @task
     def analysis_task(self) -> Task:
         return Task(
             config=self.tasks_config['analysis_task'], # type: ignore[index]
         )
+
+    # TODO: add a task for the actor agent
+
+    # TODO: add a task for the ambulance locator agent
+
+    # TODO: add a task for the hospital locator agent
 
     @crew
     def crew(self) -> Crew:
