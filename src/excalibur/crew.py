@@ -2,7 +2,7 @@ from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 
-from .tools import ambulance_eta_calculator
+from .tools.custom_tool import AmbulanceEtaTool
 
 # If you want to run a snippet of code before or after the crew starts,
 # you can use the @before_kickoff and @after_kickoff decorators
@@ -24,8 +24,7 @@ class Excalibur():
     @agent
     def analyzer(self) -> Agent:
         return Agent(
-            config=self.agents_config['analyzer'], # type: ignore[index]
-            tools=[ambulance_eta_calculator],
+            config=self.agents_config['analyzer'],
             verbose=True
         )
     
@@ -33,7 +32,7 @@ class Excalibur():
     def ambulance_dispatcher(self) -> Agent:
         return Agent(
             config=self.agents_config['ambulance_dispatcher'],
-            tools=[calcola_tempo_percorrenza],
+            tools=[AmbulanceEtaTool()],
             verbose=True
         )
 
@@ -43,8 +42,6 @@ class Excalibur():
 
     # TODO: add an agent that act like an actor, so from given addresses and symptoms, it "call" the hospital to ask for help
 
-    # TODO: add an agent that, given the patient's adddress, looks for the nearest ambulance in the map
-
     # TODO: add am agent that, given the patient's symptoms, looks for the nearest hospital with free beds and the right specialization
 
     @task
@@ -52,10 +49,14 @@ class Excalibur():
         return Task(
             config=self.tasks_config['analysis_task'], # type: ignore[index]
         )
+    
+    @task
+    def dispatch_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['dispatch_task'],
+        )
 
     # TODO: add a task for the actor agent
-
-    # TODO: add a task for the ambulance locator agent
 
     # TODO: add a task for the hospital locator agent
 

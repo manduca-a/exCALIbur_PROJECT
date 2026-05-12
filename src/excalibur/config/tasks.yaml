@@ -19,4 +19,19 @@ analysis_task:
     - Call Summary: [brief assessment]
   agent: analyzer
 
+dispatch_task:
+  description: >
+    Review the patient's location identified in the previous analysis_task.
+    
+    Here is the live data of our currently available ambulance fleet:
+    {ambulances}
+    
+    Use the "Google Maps Traffic ETA Calculator" tool to evaluate all these available units.
+    You must format the fleet data exactly as the tool requests.
+    Dispatch the ambulance with the lowest Estimated Time of Arrival (ETA).
+  expected_output: >
+    A clear dispatch order stating the chosen Ambulance ID, its ETA in minutes, 
+    and a brief justification based on the traffic analysis.
+  agent: ambulance_dispatcher
+
   # TODO: add more tasks for the other agents (actor, ambulance locator, hospital locator)
