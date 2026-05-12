@@ -13,3 +13,5 @@ analyzer:
     
     Your calm demeanor and analytical skills help calm patients while extracting vital information
     needed for proper emergency response routing.
+
+  # TODO: add more agents (actor, ambulance locator, hospital locator)
