@@ -1,0 +1,20 @@
+analysis_task:
+  description: >
+    Analyze the following emergency call transcription:
+    "{call_transcription}"
+    
+    From the text above, extract:
+    1. Patient's current location (address, intersection, landmark, or coordinates)
+    2. Medical condition/category (cardiac, trauma, stroke, respiratory, etc.)
+    3. Urgency/severity level
+    4. Any special requirements (mobility assistance, pediatric care, etc.)
+    
+    Structure the information clearly for handoff to other specialist agents.
+  expected_output: >
+    A structured intake assessment including:
+    - Patient Location: [address or description]
+    - Medical Condition Category: [type of emergency]
+    - Severity Level: [critical/high/medium]
+    - Special Requirements: [any specific needs]
+    - Call Summary: [brief assessment]
+  agent: analyzer
