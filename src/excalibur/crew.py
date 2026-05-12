@@ -1,6 +1,9 @@
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
+
+from .tools import ambulance_eta_calculator
+
 # If you want to run a snippet of code before or after the crew starts,
 # you can use the @before_kickoff and @after_kickoff decorators
 # https://docs.crewai.com/concepts/crews#example-crew-class-with-decorators
@@ -22,6 +25,15 @@ class Excalibur():
     def analyzer(self) -> Agent:
         return Agent(
             config=self.agents_config['analyzer'], # type: ignore[index]
+            tools=[ambulance_eta_calculator],
+            verbose=True
+        )
+    
+    @agent
+    def ambulance_dispatcher(self) -> Agent:
+        return Agent(
+            config=self.agents_config['ambulance_dispatcher'],
+            tools=[calcola_tempo_percorrenza],
             verbose=True
         )
 
