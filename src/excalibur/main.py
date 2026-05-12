@@ -17,6 +17,7 @@ def run():
     """
     Run the crew.
     """
+
     inputs = {
         'call_transcription': "Sono al Viale delle Scienze all'Unical, mi fa male la gamba"
     }
