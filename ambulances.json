@@ -33,6 +33,39 @@
       "state": "available",
       "occupied_until": null,
       "estimated_duration": null
+    },
+    {
+      "id": 4,
+      "name": "Ambulance 4",
+      "coordinates": {
+        "lat": 39.34458313481692,
+        "lng": 16.23734429272705
+      },
+      "state": "available",
+      "occupied_until": null,
+      "estimated_duration": null
+    },
+    {
+      "id": 5,
+      "name": "Ambulance 5",
+      "coordinates": {
+        "lat": 39.34458313481692,
+        "lng": 16.23734429272705
+      },
+      "state": "available",
+      "occupied_until": null,
+      "estimated_duration": null
+    },
+    {
+      "id": 6,
+      "name": "Ambulance 6",
+      "coordinates": {
+        "lat": 39.34458313481692,
+        "lng": 16.23734429272705
+      },
+      "state": "available",
+      "occupied_until": null,
+      "estimated_duration": null
     }
   ]
 }
