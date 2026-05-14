@@ -29,6 +29,12 @@ dispatch_task:
     Use the "Google Maps Traffic ETA Calculator" tool to evaluate all these available units.
     You must format the fleet data exactly as the tool requests.
     Dispatch the ambulance with the lowest Estimated Time of Arrival (ETA).
+
+    Then, use the tool to set the chosen ambulance's status to "occupied" for the duration of the mission, which includes:
+    - Travel time to the patient (from the ETA calculation)
+    - On-site service time (assume 5 minutes)
+    - Hospital reaching time (assume 8 minutes)
+    - Services time at the hospital (assume 2 minutes)
   expected_output: >
     A clear dispatch order stating the chosen Ambulance ID, its ETA in minutes, 
     and a brief justification based on the traffic analysis.
