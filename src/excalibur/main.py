@@ -53,7 +53,7 @@ def run():
     }
 
     inputs = {
-        'call_transcription': "Sono a villa giorcelli, mi fa male la gamba",
+        'call_transcription': "Sono a villa giorcelli, a Rende, mi fa male la gamba",
         'ambulances': json.dumps(ambulances_data_str)
     }
 
