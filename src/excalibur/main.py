@@ -7,8 +7,11 @@ from datetime import datetime
 import json
 import os
 from typing import Type
+import threading
+import time
 
 from excalibur.crew import Excalibur
+from excalibur.tools.custom_tool import AmbulanceStateManager
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
@@ -17,10 +20,28 @@ warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 # Replace with inputs you want to test with, it will automatically
 # interpolate any tasks and agents information
 
+def background_ambulance_checker():
+    """
+    Background thread that checks every 30 seconds if any occupied ambulances
+    should be released (when their mission duration expires).
+    """
+    while True:
+        try:
+            AmbulanceStateManager.check_and_free_ambulances()
+            time.sleep(30)  # Check every 30 seconds
+        except Exception as e:
+            print(f"Error in background ambulance checker: {e}")
+            time.sleep(30)  # Continue trying even if there's an error
+
 def run():
     """
     Run the crew.
     """
+    
+    # Start background ambulance checker thread
+    checker_thread = threading.Thread(target=background_ambulance_checker, daemon=True)
+    checker_thread.start()
+    print("Background ambulance checker started (checks every 30 seconds)")
 
     with open('ambulances.json', 'r') as file:
             ambulances_data = json.load(file)
@@ -32,7 +53,7 @@ def run():
     }
 
     inputs = {
-        'call_transcription': "Sono a scarro, mi fa male la gamba",
+        'call_transcription': "Sono a villa giorcelli, mi fa male la gamba",
         'ambulances': json.dumps(ambulances_data_str)
     }
 
