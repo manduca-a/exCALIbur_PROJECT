@@ -28,7 +28,6 @@ class AmbulanceStateManager:
                 now = datetime.now()
                 amb['state'] = 'occupied'
                 amb['occupied_until'] = (now + timedelta(minutes=duration_minutes)).isoformat()
-                amb['estimated_duration_seconds'] = duration_minutes * 60
                 break
         
         with open('ambulances.json', 'w') as f:

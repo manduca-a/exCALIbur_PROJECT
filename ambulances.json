@@ -8,8 +8,7 @@
         "lng": 16.246699439904933
       },
       "state": "available",
-      "occupied_until": null,
-      "estimated_duration": null
+      "occupied_until": null
     },
     {
       "id": 2,
@@ -20,8 +19,7 @@
       },
       "state": "occupied",
       "occupied_until": "2026-05-14T16:08:16.551992",
-      "estimated_duration": null,
-      "estimated_duration_seconds": 4440
+      "estimated_duration": null
     },
     {
       "id": 3,
@@ -30,9 +28,8 @@
         "lat": 39.34458313481692,
         "lng": 16.23734429272705
       },
-      "state": "available",
-      "occupied_until": null,
-      "estimated_duration": null
+      "state": "occupied",
+      "occupied_until": "2026-05-14T15:43:19.091728"
     },
     {
       "id": 4,
@@ -42,8 +39,7 @@
         "lng": 16.23734429272705
       },
       "state": "available",
-      "occupied_until": null,
-      "estimated_duration": null
+      "occupied_until": null
     },
     {
       "id": 5,
@@ -53,8 +49,7 @@
         "lng": 16.23734429272705
       },
       "state": "available",
-      "occupied_until": null,
-      "estimated_duration": null
+      "occupied_until": null
     },
     {
       "id": 6,
@@ -64,8 +59,7 @@
         "lng": 16.23734429272705
       },
       "state": "available",
-      "occupied_until": null,
-      "estimated_duration": null
+      "occupied_until": null
     }
   ]
 }
