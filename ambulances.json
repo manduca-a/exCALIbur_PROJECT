@@ -17,8 +17,8 @@
         "lat": 39.358583134816925,
         "lng": 16.23734429272705
       },
-      "state": "occupied",
-      "occupied_until": "2026-05-14T16:08:16.551992",
+      "state": "available",
+      "occupied_until": null,
       "estimated_duration": null
     },
     {
@@ -28,8 +28,8 @@
         "lat": 39.34458313481692,
         "lng": 16.23734429272705
       },
-      "state": "occupied",
-      "occupied_until": "2026-05-14T15:43:19.091728"
+      "state": "available",
+      "occupied_until": null
     },
     {
       "id": 4,
@@ -38,8 +38,8 @@
         "lat": 39.34458313481692,
         "lng": 16.23734429272705
       },
-      "state": "available",
-      "occupied_until": null
+      "state": "occupied",
+      "occupied_until": "2026-05-15T09:55:04.853260"
     },
     {
       "id": 5,

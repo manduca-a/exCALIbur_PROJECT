@@ -1,14 +1,15 @@
 from crewai.tools import BaseTool
 from typing import Type
 from pydantic import BaseModel, Field
-import googlemaps
 import os
-import json # <--- Nuova importazione necessaria
+import json
+import requests
 from dotenv import load_dotenv
 
 load_dotenv()
 
-gmaps = googlemaps.Client(key=os.environ.get("GOOGLE_API_KEY"))
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
+ROUTES_API_URL = "https://routes.googleapis.com/directions/v2:computeRoutes"
 
 from datetime import datetime, timedelta
 
@@ -116,10 +117,11 @@ class AmbulanceEtaTool(BaseTool):
 
     def _run(self, ambulances_addresses: str, patient_address: str) -> str:
         try:
-            amb_dict = json.loads(ambulances_addresses)
             
-            origins = list(amb_dict.values())
-            distances = gmaps.distance_matrix(origins=origins, destinations=[patient_address], mode='driving')
+            amb_dict = json.loads(ambulances_addresses)
+
+            # TODO: Alter coordinates in order to have something like: {"waypoint": {"location": {"latLng": {"latitude": 39.3505, "longitude": 16.2466}}}}
+            # instead of {"waypoint": {"address": "39.435, 16.3465645"}}. This would decrease tokes consumption
             
             fastest: float = float('inf')
             chosen_ambulance: str = ""
@@ -127,24 +129,69 @@ class AmbulanceEtaTool(BaseTool):
             
             report = f"Traffic analysis for destination: {patient_address}\n"
 
-            for i, (amb_id, address) in enumerate(amb_dict.items()):
-                path = distances['rows'][i]['elements'][0]
+            headers = {
+                "Content-Type": "application/json",
+                "X-Goog-Api-Key": GOOGLE_API_KEY,
+                "X-Goog-FieldMask": "originIndex,destinationIndex,duration,distanceMeters,status"
+            }
+
+            origins = [{"waypoint": {"address": address}} for address in amb_dict.values()]
+            
+            request_body = {
+                "origins": origins,
+                "destinations": [ # Notare che ora è una LISTA (destinations)
+                    {"waypoint": {"address": patient_address}}
+                ],
+                "travelMode": "DRIVE",
+                "routingPreference": "TRAFFIC_AWARE"
+            }
+            
+            ROUTES_API_URL = "https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix"
+            
+            response = requests.post(ROUTES_API_URL, json=request_body, headers=headers)
+            
+            if response.status_code == 200:
+                matrix_data = response.json()
                 
-                if path['status'] == 'OK':
-                    time_in_seconds = path['duration']['value']
-                    time_str = path['duration']['text']
-                    distance = path['distance']['text']
+                amb_keys = list(amb_dict.keys())
+                
+                for element in matrix_data:
+                    idx = element.get('originIndex', 0)
+                    amb_id = amb_keys[idx]
+                    
+                    if 'duration' in element and 'distanceMeters' in element:
+                        duration_seconds = int(element['duration'].rstrip('s'))
+                        distance_meters = int(element['distanceMeters'])
+                        
+                        minutes = duration_seconds // 60
+                        hours = minutes // 60
+                        remaining_minutes = minutes % 60
+                        
+                        distance_km = distance_meters / 1000
+                        
+                        if hours > 0:
+                            time_str = f"{hours}h {remaining_minutes}m"
+                        else:
+                            time_str = f"{minutes}m"
+                        
+                        distance_str = f"{distance_km:.1f} km"
 
-                    report += f"- {amb_id}: ETA {time_str} ({distance})\n"
+                        report += f"- {amb_id}: ETA {time_str} ({distance_str})\n"
 
-                    if time_in_seconds < fastest:
-                        fastest = time_in_seconds
-                        chosen_ambulance = amb_id
-                        chosen_time = time_str
-                else:
-                    report += f"- {amb_id}: ROUTE ERROR\n"
+                        if duration_seconds < fastest:
+                            fastest = duration_seconds
+                            chosen_ambulance = amb_id
+                            chosen_time = time_str
+                    else:
+                        report += f"- {amb_id}: ROUTE ERROR (Nessun percorso trovato)\n"
+            else:
+                return f"Error: API returned status {response.status_code} - {response.text}"
 
-            report += f"\nCONCLUSION: The fastest unit is {chosen_ambulance} with an ETA of {chosen_time}."
+            if chosen_ambulance:
+                report += f"\nCONCLUSION: The fastest unit is {chosen_ambulance} with an ETA of {chosen_time}."
+            else:
+                report += f"\nCONCLUSION: Could not determine fastest ambulance."
+            
             return report
             
         except Exception as e:
