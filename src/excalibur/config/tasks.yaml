@@ -36,6 +36,7 @@ dispatch_task:
     - Hospital reaching time (assume 8 minutes)
     - Services time at the hospital (assume 2 minutes)
   expected_output: >
+    Do the mathematical sum of these values yourself and provide ONLY the final integer total to the tool parameters. Do not pass mathematical expressions
     A clear dispatch order stating the chosen Ambulance ID, its ETA in minutes, 
     and a brief justification based on the traffic analysis.
   agent: ambulance_dispatcher

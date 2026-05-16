@@ -1,0 +1,10 @@
+simulation_task:
+  description: >
+    Act out a new, completely random emergency call. Invent the medical condition and the exact location 
+    (street name and house number) in Rende dynamically. 
+    The transcript must be extremely short and direct: state what is happening, what the main symptom or pain is, 
+    and the exact address. 
+    CRITICAL: The entire output must not exceed 25 to 30 words in total. Avoid unnecessary panic loops or long stories.
+  expected_output: >
+    A single, very short sentence or phrase containing only the raw transcription of the emergency call.
+  agent: emergency_caller_simulator
