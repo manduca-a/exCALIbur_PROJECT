@@ -40,4 +40,29 @@ dispatch_task:
     and a brief justification based on the traffic analysis.
   agent: ambulance_dispatcher
 
+hospital_locator_task:
+  description: >
+    Based on the patient's medical condition and location from the previous tasks,
+    find the best receiving hospital.
+
+    Here is the list of available hospitals:
+    {hospitals}
+
+    Use the "Hospital Locator Tool" to:
+    1. Filter hospitals with free beds (capacity > current_patients)
+    2. Filter by required specialty matching the patient's condition
+    3. Calculate real travel time from the patient's location to each
+    4. Return the best match
+
+    Return the chosen hospital with full justification.
+  expected_output: >
+    A structured hospital assignment including:
+    - Selected Hospital: [name]
+    - Address: [address]
+    - Available Beds: [number]
+    - Matching Specialization: [specialty]
+    - Estimated Travel Time: [ETA]
+    - Justification: [reasoning]
+  agent: hospital_locator  
+
   # TODO: add more tasks for the other agents (actor, ambulance locator, hospital locator)

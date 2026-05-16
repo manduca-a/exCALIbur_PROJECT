@@ -1,8 +1,21 @@
-from crewai import Agent, Crew, Process, Task
+from crewai import Agent, Crew, Process, Task, LLM
 from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 
-from .tools.custom_tool import AmbulanceEtaTool, AssignAmbulanceTool
+from dotenv import load_dotenv                            # ← ADD this whole line
+import os                                                 # ← ADD this whole line
+
+from .tools.custom_tool import AmbulanceEtaTool, AssignAmbulanceTool, HospitalLocatorTool
+
+load_dotenv()                                             # ← ADD
+
+# Explicit Groq LLM — needed for Windows machines where           ← ADD this whole block
+# CrewAI's default LLM detection fails with WinError 10061        ← ADD
+groq_llm = LLM(                                                   # ← ADD
+    model="groq/llama-3.3-70b-versatile",                         # ← ADD
+    api_key=os.getenv("GROQ_API_KEY"),                            # ← ADD
+    base_url="https://api.groq.com/openai/v1",                    # ← ADD
+)                                                                 # ← ADD
 
 # If you want to run a snippet of code before or after the crew starts,
 # you can use the @before_kickoff and @after_kickoff decorators
@@ -25,6 +38,7 @@ class Excalibur():
     def analyzer(self) -> Agent:
         return Agent(
             config=self.agents_config['analyzer'],
+            llm=groq_llm,                                # ← ADD this line
             verbose=True
         )
     
@@ -33,6 +47,15 @@ class Excalibur():
         return Agent(
             config=self.agents_config['ambulance_dispatcher'],
             tools=[AmbulanceEtaTool(), AssignAmbulanceTool()],
+            llm=groq_llm,                                # ← ADD this line
+            verbose=True
+        )
+    @agent
+    def hospital_locator(self) -> Agent:
+        return Agent(
+            config=self.agents_config['hospital_locator'],
+            tools=[HospitalLocatorTool()],
+            llm=groq_llm,
             verbose=True
         )
 
@@ -54,6 +77,12 @@ class Excalibur():
     def dispatch_task(self) -> Task:
         return Task(
             config=self.tasks_config['dispatch_task'],
+        )
+    
+    @task
+    def hospital_locator_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['hospital_locator_task'],
         )
 
     # TODO: add a task for the actor agent

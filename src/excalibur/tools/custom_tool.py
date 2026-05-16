@@ -196,3 +196,123 @@ class AmbulanceEtaTool(BaseTool):
             
         except Exception as e:
             return f"Error during route calculation: {str(e)}. Make sure the input is a valid JSON string."
+        
+
+class HospitalLocatorInput(BaseModel):
+    """Input schema for the Hospital Locator Tool"""
+
+    hospitals_data: str = Field(
+        ...,
+        description=(
+            'JSON-formatted string with hospital data including name, address, '
+            'capacity, current_patients, and specialties.'
+        )
+    )
+    patient_address: str = Field(
+        ...,
+        description="The exact address or location of the patient."
+    )
+    required_specialty: str = Field(
+        ...,
+        description="The medical specialty required (e.g., Cardiology, Trauma, Emergency Medicine)."
+    )
+
+
+class HospitalLocatorTool(BaseTool):
+    name: str = "Hospital Locator Tool"
+    description: str = (
+        "Finds the best available hospital for a patient based on: "
+        "free bed availability, required medical specialization, "
+        "and real travel time from the patient's location."
+    )
+    args_schema: Type[BaseModel] = HospitalLocatorInput
+
+    def _run(
+        self,
+        hospitals_data: str,
+        patient_address: str,
+        required_specialty: str,
+    ) -> str:
+        try:
+            hospitals = json.loads(hospitals_data)
+
+            # Filter hospitals with free beds
+            available = [h for h in hospitals if h["capacity"] > h["current_patients"]]
+            if not available:
+                return "ERROR: No hospitals have free beds available."
+
+            # Filter by specialty match (case-insensitive)
+            specialty_lower = required_specialty.lower()
+            matched = [
+                h for h in available
+                if any(specialty_lower in s.lower() for s in h["specialties"])
+            ]
+
+            candidates = matched if matched else available
+            fallback_note = "" if matched else (
+                f"\nNOTE: No hospital with '{required_specialty}' specialty found. "
+                "Using all hospitals with free beds.\n"
+            )
+
+            report = (
+                f"Hospital analysis for patient at: {patient_address}\n"
+                f"Required specialty: {required_specialty}{fallback_note}\n"
+            )
+
+            # Use Google Routes API for ETAs (same approach as AmbulanceEtaTool)
+            best_hospital = None
+            best_time_s = float("inf")
+            best_eta_str = ""
+
+            for hospital in candidates:
+                free_beds = hospital["capacity"] - hospital["current_patients"]
+                specs = ", ".join(hospital["specialties"])
+
+                payload = {
+                    "origin": {"address": hospital["address"]},
+                    "destination": {"address": patient_address},
+                    "travelMode": "DRIVE",
+                    "routingPreference": "TRAFFIC_AWARE",
+                }
+                headers = {
+                    "Content-Type": "application/json",
+                    "X-Goog-Api-Key": GOOGLE_API_KEY,
+                    "X-Goog-FieldMask": "routes.duration,routes.distanceMeters",
+                }
+
+                response = requests.post(ROUTES_API_URL, json=payload, headers=headers)
+                if response.status_code == 200:
+                    data = response.json()
+                    if "routes" in data and data["routes"]:
+                        route = data["routes"][0]
+                        time_s = int(route["duration"].rstrip("s"))
+                        dist_km = route["distanceMeters"] / 1000
+                        time_min = time_s // 60
+                        report += (
+                            f"- {hospital['name']}: ETA {time_min}m ({dist_km:.1f} km) | "
+                            f"Free beds: {free_beds} | Specialties: {specs}\n"
+                        )
+                        if time_s < best_time_s:
+                            best_time_s = time_s
+                            best_hospital = hospital
+                            best_eta_str = f"{time_min}m"
+                    else:
+                        report += f"- {hospital['name']}: NO ROUTE FOUND\n"
+                else:
+                    report += f"- {hospital['name']}: API ERROR ({response.status_code})\n"
+
+            if best_hospital:
+                free_beds = best_hospital["capacity"] - best_hospital["current_patients"]
+                report += (
+                    f"\nCONCLUSION: Best hospital is '{best_hospital['name']}' "
+                    f"at {best_hospital['address']}. "
+                    f"ETA: {best_eta_str} | Free beds: {free_beds} | "
+                    f"Specialties: {', '.join(best_hospital['specialties'])}"
+                )
+            else:
+                report += "\nERROR: Could not calculate routes to any hospital."
+
+            return report
+
+        except Exception as e:
+            return f"Error during hospital location: {str(e)}"        
