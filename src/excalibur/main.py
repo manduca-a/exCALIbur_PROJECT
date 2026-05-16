@@ -52,10 +52,16 @@ def run():
         if amb["state"] == "available"
     }
 
+
     inputs = {
         'call_transcription': "Sono a villa giorcelli, a Rende, mi fa male la gamba",
         'ambulances': json.dumps(ambulances_data_str)
     }
+
+    with open('hospitals.json', 'r') as file:
+        hospitals_data = json.load(file)
+
+    inputs['hospitals'] = json.dumps(hospitals_data["hospitals"])
 
     try:
         Excalibur().crew().kickoff(inputs=inputs)

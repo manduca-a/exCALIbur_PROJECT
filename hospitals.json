@@ -2,17 +2,17 @@
     "hospitals": [
         {
             "name": "Ospedale Annunziata",
-            "address": "123 Main St, Anytown, USA",
+            "address": "Via Francesco Migliori, 87100 Cosenza CS, Italy",
             "capacity": 100,
             "current_patients": 80,
-            "specialties": ["Cardiology", "Neurology", "Orthopedics"]
+            "specialties": ["Cardiology", "Neurology", "Orthopedics", "Trauma"]
         },
         {
             "name": "Centro Sanitario Unical",
-            "address": "456 Elm St, Anytown, USA",
+            "address": "Via Pietro Bucci, 87036 Rende CS, Italy",
             "capacity": 150,
             "current_patients": 120,
-            "specialties": ["Pediatrics", "Oncology", "Emergency Medicine"]
+            "specialties": ["Pediatrics", "Oncology", "Emergency Medicine", "Trauma"]
         }
     ]
 }
