@@ -35,15 +35,18 @@ def background_ambulance_checker():
             print(f"Error in background ambulance checker: {e}")
             time.sleep(30)  # Continue trying even if there's an error
 
+ambulances_file_lock = threading.Lock()
+
 def process_emergency_in_parallel(call_index, call_transcription):
     """
     Worker function executed inside a dedicated thread to process a single medical emergency
     without locking the main telephone simulator line.
     """
     try:
-        with open('ambulances.json', 'r') as file:
-            ambulances_data = json.load(file)
-            
+        with ambulances_file_lock:
+            with open('ambulances.json', 'r') as file:
+                ambulances_data = json.load(file)
+
         ambulances_data_str = {
             amb["name"]: f"{amb['coordinates']['lat']},{amb['coordinates']['lng']}"
             for amb in ambulances_data["ambulances"]
