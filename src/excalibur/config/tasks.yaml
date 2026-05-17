@@ -40,5 +40,59 @@ dispatch_task:
     A clear dispatch order stating the chosen Ambulance ID, its ETA in minutes, 
     and a brief justification based on the traffic analysis.
   agent: ambulance_dispatcher
+rehabilitation_task:
+  description: >
+    Based on the complete emergency case information gathered in the previous tasks,
+    develop a comprehensive post-treatment rehabilitation plan for the patient.
 
-  # TODO: add more tasks for the other agents (actor, ambulance locator, hospital locator)
+    Use the following context from prior agents:
+    - Patient intake assessment (location, medical category, severity level, 
+      special requirements) from the analysis_task
+    - Dispatched ambulance ID and ETA from the dispatch_task, which gives you
+      an estimate of time-to-care and transport conditions
+
+    Your rehabilitation plan must include:
+
+    1. POST-HOSPITALIZATION CLINICAL SUMMARY
+       - Assumed stabilization status based on emergency category
+       - Expected immediate medical interventions upon arrival
+
+    2. REHABILITATION PATHWAY (phased approach)
+       Phase 1 — Acute care (0–72h): bed rest protocols, monitoring parameters,
+                  contraindications, early mobilization if applicable
+       Phase 2 — Subacute (day 3 to 2 weeks): physiotherapy initiation,
+                  occupational therapy if needed, pain management plan
+       Phase 3 — Outpatient recovery (week 2 onwards): home exercise program,
+                  specialist follow-up schedule, dietary recommendations
+
+    3. THERAPY AND MEDICATIONS
+       - Suggested drug classes (do NOT specify exact dosages — flag for prescribing physician)
+       - Physical therapy modalities (e.g. respiratory physiotherapy for pulmonary cases)
+       - Psychological support if trauma or high-stress emergency
+
+    4. RECOVERY TIMELINE ESTIMATE
+       - Expected full recovery duration based on severity level
+       - Key milestones and criteria for phase progression
+
+    5. RELAPSE PREVENTION AND FOLLOW-UP
+       - Risk factors to monitor
+       - Emergency warning signs for the patient and caregivers
+       - Scheduled follow-up touchpoints
+
+    Adapt all recommendations to the specific medical category identified.
+    For CRITICAL severity: be conservative, flag all decisions for physician review.
+    For HIGH severity: provide a complete plan with clinical justifications.
+    For MEDIUM severity: focus on outpatient recovery and lifestyle guidance.
+  expected_output: >
+    A structured rehabilitation report in Markdown format containing all five
+    sections listed above. The report must be:
+    - Clinically grounded and coherent with the emergency type
+    - Clearly labeled with section headers
+    - Free of specific drug dosages (flag for physician)
+    - Realistic in timeline estimates based on the severity level
+    - Professional in tone but accessible to care coordinators
+  agent: rehabilitation_specialist
+  context:
+    - analysis_task
+    - dispatch_task
+  # TODO: add more tasks for the other agents ( ambulance locator, hospital locator)
