@@ -1,9 +1,11 @@
 from crewai.tools import BaseTool
-from typing import Type
-from pydantic import BaseModel, Field
+from typing import Type, Union
+from pydantic import BaseModel, Field, field_validator
 import os
 import json
 import requests
+import ast
+import re
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -70,41 +72,89 @@ class AmbulanceStateManager:
             with open('ambulances.json', 'w') as f:
                 json.dump(data, f, indent=2)
 
+def _parse_int_field(v, field_name: str) -> int:
+    """
+        Converts to int a value that can come as:
+        - pure int → returns directly
+        - numeric string "2" → int("2") = 2
+        - arithmetic expression "21+5+8+2" → ast.literal_eval = 36
+        - fallback → sums all numbers found in the string
+        """
+    if isinstance(v, int):
+        return v
+    if isinstance(v, float):
+        return int(v)
+    if isinstance(v, str):
+        v_stripped = v.strip()
+        # Most common case: pure numeric string
+        if v_stripped.isdigit():
+            return int(v_stripped)
+        # Simple arithmetic expression (only numbers and operators +−*/)
+        if re.fullmatch(r'[\d\s\+\-\*\/\.]+', v_stripped):
+            try:
+                result = ast.literal_eval(v_stripped)
+                return int(result)
+            except Exception:
+                pass
+        # Fallback: sum all numbers found in the string
+        numbers = re.findall(r'\d+', v_stripped)
+        if numbers:
+            return sum(int(n) for n in numbers)
+    raise ValueError(f"Cannot parse '{field_name}' as integer: received {v!r}")
+
+
 class AssignAmbulanceInput(BaseModel):
-    """Input schema for the Assign Ambulance Tool"""
-    
-    ambulance_id: int = Field(
-        ..., 
-        description="The ID of the ambulance to assign to the patient"
+    ambulance_id: Union[int, str] = Field(
+        ...,
+        description="The numeric ID of the ambulance to assign (must be an integer)"
     )
-    duration_minutes: int = Field(
-        ..., 
-        description="Total mission duration in minutes (travel time + hospital service time)"
+    duration_minutes: Union[int, str] = Field(
+        ...,
+        description="Total mission duration in minutes (must be a computed integer, not an expression)"
     )
 
+    # mode='before' → the validator runs BEFORE Pydantic attempts to cast the type,
+    # thus intercepting the string before it is rejected by the schema.
+    @field_validator('ambulance_id', mode='before')
+    @classmethod
+    def parse_ambulance_id(cls, v):
+        return _parse_int_field(v, 'ambulance_id')
+
+    @field_validator('duration_minutes', mode='before')
+    @classmethod
+    def parse_duration_minutes(cls, v):
+        return _parse_int_field(v, 'duration_minutes')
+
 class AmbulanceEtaInput(BaseModel):
-    """Input schema for the Ambulance ETA Tool"""
-    
     ambulances_addresses: str = Field(
-        ..., 
-        description='A JSON-formatted string mapping ambulance IDs to their current addresses. Example: \'{"Alpha": "Via Roma 1, Milano", "Bravo": "Piazza Duomo, Milano"}\''
+        ...,
+        description=(
+            'A JSON-formatted string mapping ambulance names to their current coordinates. '
+            'Example: \'{"Ambulance 1": "39.3505,16.2466", "Ambulance 2": "39.3585,16.2373"}\''
+        )
     )
     patient_address: str = Field(
-        ..., 
+        ...,
         description="The exact address or location of the patient."
     )
 
 class AssignAmbulanceTool(BaseTool):
-    name: str = "Assign Ambulance"
-    description: str = "Marks an ambulance as occupied for the specified mission duration. Use this after selecting the best ambulance to dispatch."
+    name: str = "assign_ambulance"
+    description: str = (
+        "Marks an ambulance as occupied for the total duration of the mission. "
+        "Requires the ambulance numeric ID and the total mission time in minutes "
+        "(travel + on-site + hospital). Always pass pre-computed integers, never expressions."
+    )
     args_schema: Type[BaseModel] = AssignAmbulanceInput
 
     def _run(self, ambulance_id: int, duration_minutes: int) -> str:
-        try:
-            AmbulanceStateManager.assign_ambulance(ambulance_id, duration_minutes)
-            return f"✓ Ambulance {ambulance_id} successfully assigned and marked as occupied for {duration_minutes} minutes."
-        except Exception as e:
-            return f"Error assigning ambulance: {str(e)}"
+        # At this point the values are already clean thanks to the field_validator
+        AmbulanceStateManager.assign_ambulance(ambulance_id, duration_minutes)
+        return (
+            f"✓ Ambulance {ambulance_id} successfully assigned and marked as "
+            f"occupied for {duration_minutes} minutes."
+        )
+    
 
 class AmbulanceEtaTool(BaseTool):
     name: str = "Google Maps Traffic ETA Calculator"
@@ -135,8 +185,19 @@ class AmbulanceEtaTool(BaseTool):
                 "X-Goog-FieldMask": "originIndex,destinationIndex,duration,distanceMeters,status"
             }
 
-            origins = [{"waypoint": {"address": address}} for address in amb_dict.values()]
-            
+            origins = []
+            for lat_lng_str in amb_dict.values():
+                lat_str, lng_str = lat_lng_str.split(',')
+                origins.append({
+                    "waypoint": {
+                        "location": {
+                            "latLng": {
+                                "latitude": float(lat_str.strip()),
+                                "longitude": float(lng_str.strip())
+                            }
+                        }
+                    }
+                })
             request_body = {
                 "origins": origins,
                 "destinations": [ # Notare che ora è una LISTA (destinations)

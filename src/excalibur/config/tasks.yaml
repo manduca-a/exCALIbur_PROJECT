@@ -35,6 +35,10 @@ dispatch_task:
     - On-site service time (assume 5 minutes)
     - Hospital reaching time (assume 8 minutes)
     - Services time at the hospital (assume 2 minutes)
+    IMPORTANT: You MUST compute the sum yourself before calling the tool.
+    Example: if ETA=14, the total is 14+5+8+2=29, so pass duration_minutes=29 (NOT "14+5+8+2").
+    Never pass a mathematical expression — only the final computed integer.
+
   expected_output: >
     Do the mathematical sum of these values yourself and provide ONLY the final integer total to the tool parameters. Do not pass mathematical expressions
     A clear dispatch order stating the chosen Ambulance ID, its ETA in minutes, 
