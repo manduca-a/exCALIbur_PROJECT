@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 import sys
 import warnings
-
-from datetime import datetime
-
 import json
-import os
-from typing import Type
+from datetime import datetime
 import threading
 import time
 import random
+from pathlib import Path
+
 
 from excalibur.crew import Excalibur
 from excalibur.simulator_crew import SimulatorCrew
@@ -17,10 +15,25 @@ from excalibur.tools.custom_tool import AmbulanceStateManager
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
+ROOT_DIR = Path(__file__).resolve().parents[2]
+AMBULANCES_PATH = ROOT_DIR / "ambulances.json"
+HOSPITALS_PATH = ROOT_DIR / "hospitals.json"
+
 # This main file is intended to be a way for you to run your
 # crew locally, so refrain from adding unnecessary logic into this file.
 # Replace with inputs you want to test with, it will automatically
 # interpolate any tasks and agents information
+
+
+def load_json_file(path: Path) -> dict:
+    with path.open("r", encoding="utf-8") as file:
+        return json.load(file)
+
+
+def get_text_output(output) -> str:
+    if hasattr(output, "raw"):
+        return str(output.raw)
+    return str(output)
 
 def background_ambulance_checker():
     """
@@ -36,6 +49,7 @@ def background_ambulance_checker():
             time.sleep(30)  # Continue trying even if there's an error
 
 ambulances_file_lock = threading.Lock()
+hospitals_file_lock = threading.Lock()
 
 def process_emergency_in_parallel(call_index, call_transcription):
     """
@@ -44,10 +58,9 @@ def process_emergency_in_parallel(call_index, call_transcription):
     """
     try:
         with ambulances_file_lock:
-            with open('ambulances.json', 'r') as file:
-                ambulances_data = json.load(file)
+            ambulances_data = load_json_file(AMBULANCES_PATH)
 
-        ambulances_data_str = {
+        ambulances_data_str = { # Only include available ambulances, format: "Ambulance Name": "Lat,Lng"
             amb["name"]: f"{amb['coordinates']['lat']},{amb['coordinates']['lng']}"
             for amb in ambulances_data["ambulances"]
             if amb["state"] == "available"
@@ -56,10 +69,24 @@ def process_emergency_in_parallel(call_index, call_transcription):
         if not ambulances_data_str:
             print(f"[System Warning] Call #{call_index} put on hold: No ambulances available at this time.")
             return
+        
+        with hospitals_file_lock:
+            hospitals_data = load_json_file(HOSPITALS_PATH)
+
+        hospitals_data_str = {  # Only include hospitals with available beds and relevant specialties, format: "Hospital Name": "Lat,Lng (Capacity: X/Y, Specialties: A, B, C)"
+            hosp["name"]: f"{hosp['coordinates']['lat']},{hosp['coordinates']['lng']} (Capacity: {hosp['capacity']['available_beds']}/{hosp['capacity']['total_beds']}, Specialties: {', '.join(hosp['specialties'])})"
+            for hosp in hospitals_data["hospitals"]
+            if hosp["capacity"]["available_beds"] > 0
+        }
+
+        if not hospitals_data_str:
+            print(f"[System Warning] Call #{call_index} put on hold: No hospitals with available capacity at this time.")
+            return
 
         inputs = {
             'call_transcription': call_transcription,
-            'ambulances': json.dumps(ambulances_data_str)
+            'ambulances': json.dumps(ambulances_data_str),
+            'hospitals': json.dumps(hospitals_data_str)
         }
         
         print(f"[Thread-Call-{call_index}] Excalibur Crew is now processing Call #{call_index}...")
@@ -79,15 +106,18 @@ def phone_line_simulator():
     
     while True:
         try:
-            seconds_to_wait = random.randint(10, 60)
-            print(f"[System] Next emergency call will arrive in {seconds_to_wait} seconds...")
+            seconds_to_wait = random.randint(60, 90)
+            for remaining in range(seconds_to_wait, 0, -1):
+                sys.stdout.write(f"\r[System] Next emergency call #{call_index} will arrive in {remaining} seconds... ")
+                sys.stdout.flush()
+                time.sleep(1)
             time.sleep(seconds_to_wait)
             
             print(f"[System] INCOMING EMERGENCY CALL #{call_index}")
             
             # Kicking off the Simulator Crew to autonomously generate problem descriptions and positions
             call_output = SimulatorCrew().crew().kickoff()
-            call_transcription = str(call_output)
+            call_transcription = get_text_output(call_output)
             
             print(f"[System] Live Call Transcript received from Simulator for Call #{call_index}:\n\"{call_transcription}\"")
             
@@ -191,3 +221,7 @@ def run_with_trigger():
         return result
     except Exception as e:
         raise Exception(f"An error occurred while running the crew with trigger: {e}")
+
+
+if __name__ == "__main__":
+    run()

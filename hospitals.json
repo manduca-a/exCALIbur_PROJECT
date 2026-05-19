@@ -2,17 +2,29 @@
     "hospitals": [
         {
             "name": "Ospedale Annunziata",
-            "address": "123 Main St, Anytown, USA",
-            "capacity": 100,
+            "coordinates": {
+                "lat": 39.2998,
+                "lng": 16.2531
+            },
+            "capacity": {
+                "total_beds": 100,
+                "available_beds": 20
+            },
             "current_patients": 80,
-            "specialties": ["Cardiology", "Neurology", "Orthopedics"]
+            "specialties": ["Cardiology", "Neurology", "Orthopedics", "Trauma"]
         },
         {
             "name": "Centro Sanitario Unical",
-            "address": "456 Elm St, Anytown, USA",
-            "capacity": 150,
+            "coordinates": {
+                "lat": 39.2998,
+                "lng": 16.2531
+            },
+            "capacity": {
+                "total_beds": 150,
+                "available_beds": 30
+            },
             "current_patients": 120,
-            "specialties": ["Pediatrics", "Oncology", "Emergency Medicine"]
+            "specialties": ["Pediatrics", "Oncology", "Emergency Medicine", "Trauma"]
         }
     ]
 }
