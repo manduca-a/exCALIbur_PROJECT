@@ -21,6 +21,11 @@ analysis_task:
 
 dispatch_task:
   description: >
+    MANDATORY SEQUENCE:
+    1. Call google_maps_traffic_eta_calculator FIRST and wait for the result.
+    2. ONLY AFTER reading the ETA result, identify the ambulance with the lowest ETA.
+    3. THEN and only then call assign_ambulance with that ambulance.
+    Do NOT call assign_ambulance before receiving ETA results.
     Review the patient's location identified in the previous analysis_task.
     
     Here is the live data of our currently available ambulance fleet:
