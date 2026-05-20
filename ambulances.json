@@ -27,8 +27,8 @@
         "lat": 39.35267479464905,
         "lng": 16.23392548540471
       },
-      "state": "occupied",
-      "occupied_until": "2026-05-19T17:06:51.015723"
+      "state": "available",
+      "occupied_until": null
     },
     {
       "id": 4,

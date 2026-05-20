@@ -170,8 +170,6 @@ class AmbulanceEtaTool(BaseTool):
             
             amb_dict = json.loads(ambulances_addresses)
 
-            # TODO: Alter coordinates in order to have something like: {"waypoint": {"location": {"latLng": {"latitude": 39.3505, "longitude": 16.2466}}}}
-            # instead of {"waypoint": {"address": "39.435, 16.3465645"}}. This would decrease tokes consumption
             
             fastest: float = float('inf')
             chosen_ambulance: str = ""
@@ -283,7 +281,7 @@ class HospitalLocatorTool(BaseTool):
     name: str = "Hospital Locator Tool"
     description: str = (
         "Finds the best available hospital for a patient based on: "
-        "free bed availability, required medical specialization, "
+        "required medical specialization, "
         "and real travel time from the patient's location."
     )
     args_schema: Type[BaseModel] = HospitalLocatorInput
@@ -297,19 +295,14 @@ class HospitalLocatorTool(BaseTool):
         try:
             hospitals = json.loads(hospitals_data)
 
-            # Filter hospitals with free beds
-            available = [h for h in hospitals if h["capacity"] > h["current_patients"]]
-            if not available:
-                return "ERROR: No hospitals have free beds available."
-
             # Filter by specialty match (case-insensitive)
             specialty_lower = required_specialty.lower()
             matched = [
-                h for h in available
+                h for h in hospitals
                 if any(specialty_lower in s.lower() for s in h["specialties"])
             ]
 
-            candidates = matched if matched else available
+            candidates = matched if matched else hospitals  # If no match, consider all hospitals with free beds
             fallback_note = "" if matched else (
                 f"\nNOTE: No hospital with '{required_specialty}' specialty found. "
                 "Using all hospitals with free beds.\n"
