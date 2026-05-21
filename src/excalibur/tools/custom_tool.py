@@ -198,7 +198,7 @@ class AmbulanceEtaTool(BaseTool):
                 })
             request_body = {
                 "origins": origins,
-                "destinations": [ # Notare che ora è una LISTA (destinations)
+                "destinations": [
                     {"waypoint": {"address": patient_address}}
                 ],
                 "travelMode": "DRIVE",
@@ -260,11 +260,13 @@ class AmbulanceEtaTool(BaseTool):
 class HospitalLocatorInput(BaseModel):
     """Input schema for the Hospital Locator Tool"""
 
-    hospitals_data: str = Field(
+    hospitals_addresses: str = Field(
         ...,
         description=(
-            'JSON-formatted string with hospital data including name, address, '
-            'capacity, current_patients, and specialties.'
+            'A JSON-formatted string mapping hospital names to their current coordinates, '
+            'available beds, and specialties. Example: '
+            '{"Hospital A": "39.3505,16.2466|4|Cardiology,Trauma", '
+            '"Hospital B": "39.3585,16.2373|2|Emergency Medicine"}'
         )
     )
     patient_address: str = Field(
@@ -275,6 +277,30 @@ class HospitalLocatorInput(BaseModel):
         ...,
         description="The medical specialty required (e.g., Cardiology, Trauma, Emergency Medicine)."
     )
+
+
+def _parse_hospital_entry(name: str, value: str) -> dict[str, object]:
+    """Parse a hospital entry from the combined string format."""
+    parts = [part.strip() for part in value.split("|")]
+    coord_part = parts[0] if parts else ""
+    lat_lng = coord_part.split(",") if "," in coord_part else ["", ""]
+    latitude = float(lat_lng[0].strip()) if lat_lng[0] else 0.0
+    longitude = float(lat_lng[1].strip()) if len(lat_lng) > 1 else 0.0
+
+    available_beds = None
+    specialties = []
+    if len(parts) > 1 and parts[1].isdigit():
+        available_beds = int(parts[1])
+    if len(parts) > 2:
+        specialties = [s.strip() for s in parts[2].split(",") if s.strip()]
+
+    return {
+        "name": name,
+        "latitude": latitude,
+        "longitude": longitude,
+        "available_beds": available_beds,
+        "specialties": specialties,
+    }
 
 
 class HospitalLocatorTool(BaseTool):
@@ -288,80 +314,134 @@ class HospitalLocatorTool(BaseTool):
 
     def _run(
         self,
-        hospitals_data: str,
+        hospitals_addresses: str,
         patient_address: str,
         required_specialty: str,
     ) -> str:
         try:
-            hospitals = json.loads(hospitals_data)
+            hospitals_raw = json.loads(hospitals_addresses)
+            hospitals = [
+                _parse_hospital_entry(name, value)
+                for name, value in hospitals_raw.items()
+            ]
 
-            # Filter by specialty match (case-insensitive)
             specialty_lower = required_specialty.lower()
             matched = [
                 h for h in hospitals
                 if any(specialty_lower in s.lower() for s in h["specialties"])
+                and h["available_beds"] is not None and h["available_beds"] > 0
             ]
 
-            candidates = matched if matched else hospitals  # If no match, consider all hospitals with free beds
+            candidates = matched if matched else [
+                h for h in hospitals if h["available_beds"] is not None and h["available_beds"] > 0
+            ]
             fallback_note = "" if matched else (
                 f"\nNOTE: No hospital with '{required_specialty}' specialty found. "
-                "Using all hospitals with free beds.\n"
+                "Using all hospitals with available beds.\n"
             )
+
+            if not candidates:
+                return "ERROR: No hospitals with available beds were provided."
 
             report = (
                 f"Hospital analysis for patient at: {patient_address}\n"
                 f"Required specialty: {required_specialty}{fallback_note}\n"
             )
 
-            # Use Google Routes API for ETAs (same approach as AmbulanceEtaTool)
+            headers = {
+                "Content-Type": "application/json",
+                "X-Goog-Api-Key": GOOGLE_API_KEY,
+                "X-Goog-FieldMask": "originIndex,destinationIndex,duration,distanceMeters,status",
+            }
+
+            origins = [
+                {
+                    "waypoint": {
+                        "location": {
+                            "latLng": {
+                                "latitude": h["latitude"],
+                                "longitude": h["longitude"],
+                            }
+                        }
+                    }
+                }
+                for h in candidates
+            ]
+
+            request_body = {
+                "origins": origins,
+                "destinations": [
+                    {"waypoint": {"address": patient_address}}
+                ],
+                "travelMode": "DRIVE",
+                "routingPreference": "TRAFFIC_AWARE",
+            }
+
+            routes_matrix_url = "https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix"
+            response = requests.post(routes_matrix_url, json=request_body, headers=headers)
+            if response.status_code != 200:
+                return f"Error: API returned status {response.status_code} - {response.text}"
+
+            matrix_data = response.json()
+            elements = []
+            if isinstance(matrix_data, dict):
+                if "routeMatrixElements" in matrix_data:
+                    elements = matrix_data["routeMatrixElements"]
+                elif "rows" in matrix_data:
+                    for row in matrix_data["rows"]:
+                        elements.extend(row.get("elements", []))
+                elif "originIndex" in matrix_data:
+                    elements = [matrix_data]
+            elif isinstance(matrix_data, list):
+                elements = matrix_data
+
             best_hospital = None
             best_time_s = float("inf")
             best_eta_str = ""
 
-            for hospital in candidates:
-                free_beds = hospital["capacity"] - hospital["current_patients"]
-                specs = ", ".join(hospital["specialties"])
-
-                payload = {
-                    "origin": {"address": hospital["address"]},
-                    "destination": {"address": patient_address},
-                    "travelMode": "DRIVE",
-                    "routingPreference": "TRAFFIC_AWARE",
-                }
-                headers = {
-                    "Content-Type": "application/json",
-                    "X-Goog-Api-Key": GOOGLE_API_KEY,
-                    "X-Goog-FieldMask": "routes.duration,routes.distanceMeters",
-                }
-
-                response = requests.post(ROUTES_API_URL, json=payload, headers=headers)
-                if response.status_code == 200:
-                    data = response.json()
-                    if "routes" in data and data["routes"]:
-                        route = data["routes"][0]
-                        time_s = int(route["duration"].rstrip("s"))
-                        dist_km = route["distanceMeters"] / 1000
-                        time_min = time_s // 60
-                        report += (
-                            f"- {hospital['name']}: ETA {time_min}m ({dist_km:.1f} km) | "
-                            f"Free beds: {free_beds} | Specialties: {specs}\n"
-                        )
-                        if time_s < best_time_s:
-                            best_time_s = time_s
-                            best_hospital = hospital
-                            best_eta_str = f"{time_min}m"
-                    else:
-                        report += f"- {hospital['name']}: NO ROUTE FOUND\n"
+            for element in elements:
+                origin_index = element.get("originIndex", 0)
+                hospital = candidates[origin_index]
+                status_value = element.get("status", "UNKNOWN")
+                if isinstance(status_value, dict):
+                    status_str = status_value.get("code") or status_value.get("message") or json.dumps(status_value)
                 else:
-                    report += f"- {hospital['name']}: API ERROR ({response.status_code})\n"
+                    status_str = str(status_value)
+
+                if status_str != "OK":
+                    report += f"- {hospital['name']}: ROUTE ERROR ({status_str})\n"
+                    continue
+
+                duration_raw = element.get("duration", 0)
+                if isinstance(duration_raw, str):
+                    duration_seconds = int(duration_raw.rstrip("s")) if duration_raw else 0
+                else:
+                    duration_seconds = int(duration_raw or 0)
+
+                distance_raw = element.get("distanceMeters", element.get("distance_meters", 0))
+                distance_meters = int(distance_raw or 0)
+                minutes = duration_seconds // 60
+                hours = minutes // 60
+                remaining_minutes = minutes % 60
+                distance_km = distance_meters / 1000
+                time_str = f"{hours}h {remaining_minutes}m" if hours > 0 else f"{minutes}m"
+
+                report += (
+                    f"- {hospital['name']}: ETA {time_str} ({distance_km:.1f} km) | "
+                    f"Available beds: {hospital['available_beds']} | "
+                    f"Specialties: {', '.join(hospital['specialties'])}\n"
+                )
+
+                if duration_seconds < best_time_s:
+                    best_time_s = duration_seconds
+                    best_hospital = hospital
+                    best_eta_str = time_str
 
             if best_hospital:
-                free_beds = best_hospital["capacity"] - best_hospital["current_patients"]
                 report += (
                     f"\nCONCLUSION: Best hospital is '{best_hospital['name']}' "
-                    f"at {best_hospital['address']}. "
-                    f"ETA: {best_eta_str} | Free beds: {free_beds} | "
-                    f"Specialties: {', '.join(best_hospital['specialties'])}"
+                    f"with ETA {best_eta_str}, available beds: {best_hospital['available_beds']}, "
+                    f"specialties: {', '.join(best_hospital['specialties'])}."
                 )
             else:
                 report += "\nERROR: Could not calculate routes to any hospital."
