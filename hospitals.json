@@ -3,8 +3,8 @@
         {
             "name": "Ospedale Annunziata",
             "coordinates": {
-                "lat": 39.293746,
-                "lng": 16.252713
+                "lat": 39.29372474588655,
+                "lng": 16.24845651575356
             },
             "capacity": {
                 "total_beds": 100,
@@ -16,15 +16,15 @@
         {
             "name": "Centro Sanitario Unical",
             "coordinates": {
-                "lat": 39.2998,
-                "lng": 16.2531
+                "lat": 39.36436850071403, 
+                "lng": 16.225999677909275
             },
             "capacity": {
                 "total_beds": 150,
                 "available_beds": 30
             },
             "current_patients": 120,
-            "specialties": ["Pediatrics", "Oncology", "Emergency Medicine", "Trauma"]
+            "specialties": ["Pediatrics", "Oncology", "Emergency Medicine"]
         }
     ]
 }

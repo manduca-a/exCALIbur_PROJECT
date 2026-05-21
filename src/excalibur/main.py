@@ -109,12 +109,7 @@ def phone_line_simulator(stop_event: threading.Event, first_time=True):
     while not stop_event.is_set():
         try:
             
-            if not first_time:
-                seconds_to_wait = random.randint(60, 90)
-                first_time = False
-            else:
-                seconds_to_wait = 5
-                
+            seconds_to_wait = random.randint(60,90)                
             sys.stdout.write(f"\r[System] Next emergency call #{call_index} will arrive in {seconds_to_wait} seconds... ")
             
             if stop_event.wait(seconds_to_wait):
