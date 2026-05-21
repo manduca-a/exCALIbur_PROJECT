@@ -3,8 +3,8 @@
         {
             "name": "Ospedale Annunziata",
             "coordinates": {
-                "lat": 39.2998,
-                "lng": 16.2531
+                "lat": 39.293746,
+                "lng": 16.252713
             },
             "capacity": {
                 "total_beds": 100,

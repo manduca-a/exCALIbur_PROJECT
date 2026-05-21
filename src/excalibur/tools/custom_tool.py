@@ -404,19 +404,28 @@ class HospitalLocatorTool(BaseTool):
                 hospital = candidates[origin_index]
                 status_value = element.get("status", "UNKNOWN")
                 if isinstance(status_value, dict):
-                    status_str = status_value.get("code") or status_value.get("message") or json.dumps(status_value)
+                    status_str = status_value.get("code") or status_value.get("message") or ""
                 else:
                     status_str = str(status_value)
 
-                if status_str != "OK":
-                    report += f"- {hospital['name']}: ROUTE ERROR ({status_str})\n"
-                    continue
-
                 duration_raw = element.get("duration", 0)
-                if isinstance(duration_raw, str):
+                if isinstance(duration_raw, dict):
+                    duration_seconds = int(duration_raw.get("seconds", 0))
+                elif isinstance(duration_raw, str):
                     duration_seconds = int(duration_raw.rstrip("s")) if duration_raw else 0
                 else:
                     duration_seconds = int(duration_raw or 0)
+
+                distance_raw = element.get("distanceMeters", element.get("distance_meters", 0))
+                if isinstance(distance_raw, dict):
+                    distance_meters = int(distance_raw.get("value", 0))
+                else:
+                    distance_meters = int(distance_raw or 0)
+
+                if status_str not in {"OK", "ok", "Ok"} and duration_seconds == 0 and distance_meters == 0:
+                    display_status = status_str or json.dumps(status_value)
+                    report += f"- {hospital['name']}: ROUTE ERROR ({display_status})\n"
+                    continue
 
                 distance_raw = element.get("distanceMeters", element.get("distance_meters", 0))
                 distance_meters = int(distance_raw or 0)
