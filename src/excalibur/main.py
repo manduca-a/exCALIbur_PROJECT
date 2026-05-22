@@ -11,7 +11,7 @@ from pathlib import Path
 
 from excalibur.crew import Excalibur
 from excalibur.simulator_crew import SimulatorCrew
-from excalibur.tools.custom_tool import AmbulanceStateManager
+from excalibur.tools.custom_tool import AmbulanceStateManager, HospitalBedManager
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
@@ -50,6 +50,19 @@ def background_ambulance_checker(stop_event: threading.Event):
 ambulances_file_lock = threading.Lock()
 hospitals_file_lock = threading.Lock()
 
+
+def background_hospital_bed_checker(stop_event: threading.Event):
+    """
+    Background thread that checks every 60 seconds if any reserved beds
+    should be released (when their reservation duration expires).
+    """
+    while not stop_event.is_set():
+        try:
+            HospitalBedManager.check_and_free_beds()
+        except Exception as e:
+            print(f"Error in background hospital bed checker: {e}")
+        stop_event.wait(60)  # Check every 60 seconds
+
 def process_emergency_in_parallel(call_index, call_transcription, stop_event: threading.Event):
     """
     Worker function executed inside a dedicated thread to process a single medical emergency
@@ -75,8 +88,14 @@ def process_emergency_in_parallel(call_index, call_transcription, stop_event: th
         with hospitals_file_lock:
             hospitals_data = load_json_file(HOSPITALS_PATH)
 
-        hospitals_data_str = {  # Only include hospitals with available beds and relevant specialties, format: "Hospital Name": "Lat,Lng (Capacity: X/Y, Specialties: A, B, C)"
-            hosp["name"]: f"{hosp['coordinates']['lat']},{hosp['coordinates']['lng']} (Capacity: {hosp['capacity']['available_beds']}/{hosp['capacity']['total_beds']}, Specialties: {', '.join(hosp['specialties'])})"
+        # Build hospital data in the format the HospitalLocatorTool expects:
+        # "Hospital Name": "lat,lng|available_beds|specialty1,specialty2,..."
+        hospitals_data_str = {
+            hosp["name"]: (
+                f"{hosp['coordinates']['lat']},{hosp['coordinates']['lng']}"
+                f"|{hosp['capacity']['available_beds']}"
+                f"|{','.join(hosp['specialties'])}"
+            )
             for hosp in hospitals_data["hospitals"]
             if hosp["capacity"]["available_beds"] > 0
         }
@@ -96,7 +115,10 @@ def process_emergency_in_parallel(call_index, call_transcription, stop_event: th
         print(f"[Thread-Call-{call_index}] Emergency Call #{call_index} successfully processed.")
         
     except Exception as e:
+        import traceback
         print(f"Error processing Call #{call_index} inside parallel thread: {e}")
+        print(f"[FULL TRACEBACK]")
+        traceback.print_exc()
 
 def phone_line_simulator(stop_event: threading.Event, first_time=True):
     """
@@ -154,6 +176,16 @@ def run():
     checker_thread.start()
     print("Background ambulance checker started (checks every 30 seconds)")
 
+    # Start background hospital bed checker thread       
+    bed_checker_thread = threading.Thread(                
+        target=background_hospital_bed_checker,           
+        daemon=True,                                       
+        args=(stop_event,)                                 
+    )                                                       
+    bed_checker_thread.start()                             
+    print("Background hospital bed checker started (checks every 60 seconds)")  
+
+
     # Start autonomous random phone call generator thread
     phone_thread = threading.Thread(
         target=phone_line_simulator,
@@ -173,6 +205,7 @@ def run():
         stop_event.set()
         phone_thread.join(timeout=5)
         checker_thread.join(timeout=5)
+        bed_checker_thread.join(timeout=5) 
         print("Shutdown signal sent to background threads.")
 
 

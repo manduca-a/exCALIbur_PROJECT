@@ -101,34 +101,33 @@ rehabilitation_task:
     - Realistic in timeline estimates based on the severity level
     - Professional in tone but accessible to care coordinators
   agent: rehabilitation_specialist
-  context:
-    - analysis_task
-    - dispatch_task
+ 
   # TODO: add more tasks for the other agents ( ambulance locator, hospital locator)
 
 hospital_locator_task:
   description: >
     Based on the patient's medical condition and location from the previous tasks,
-    find the best receiving hospital.
+    find the best receiving hospital AND reserve a bed there.
 
     Here is the list of available hospitals:
     {hospitals}
 
-    Use the "Hospital Locator Tool" to:
-    1. Filter hospitals with free beds (capacity > current_patients)
-    2. Filter by required specialty matching the patient's condition
-    3. Calculate real travel time from the patient's location to each
-    4. Return the best match
+    MANDATORY SEQUENCE:
+    1. Call the "Hospital Locator Tool" to find the best matching hospital
+       (filter by free beds + specialty match + lowest ETA).
+    2. AFTER you have the result, call "reserve_hospital_bed" with the exact
+       hospital name to decrement its available_beds counter.
 
     Return the chosen hospital with full justification.
   expected_output: >
     A structured hospital assignment including:
     - Selected Hospital: [name]
     - Address: [address]
-    - Available Beds: [number]
+    - Available Beds: [number, BEFORE reservation]
     - Matching Specialization: [specialty]
     - Estimated Travel Time: [ETA]
+    - Bed Reserved: yes/no
     - Justification: [reasoning]
-  agent: hospital_locator  
+  agent: hospital_locator
 
   # TODO: add more tasks for the other agents (actor, ambulance locator, hospital locator)

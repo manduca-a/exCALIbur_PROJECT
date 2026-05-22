@@ -2,13 +2,15 @@ from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 
+from .llm_config import groq_llm
+
+
 @CrewBase
 class SimulatorCrew():
     """Crew responsible for simulating random emergency calls"""
 
     agents: list[BaseAgent]
     tasks: list[Task]
-
 
     agents_config = 'config/simulator_agents.yaml'
     tasks_config = 'config/simulator_tasks.yaml'
@@ -17,6 +19,7 @@ class SimulatorCrew():
     def emergency_caller_simulator(self) -> Agent:
         return Agent(
             config=self.agents_config['emergency_caller_simulator'],
+            llm=groq_llm,
             verbose=True
         )
 

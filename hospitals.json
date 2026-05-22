@@ -1,30 +1,48 @@
 {
-    "hospitals": [
-        {
-            "name": "Ospedale Annunziata",
-            "coordinates": {
-                "lat": 39.29372474588655,
-                "lng": 16.24845651575356
-            },
-            "capacity": {
-                "total_beds": 100,
-                "available_beds": 20
-            },
-            "current_patients": 80,
-            "specialties": ["Cardiology", "Neurology", "Orthopedics", "Trauma"]
-        },
-        {
-            "name": "Centro Sanitario Unical",
-            "coordinates": {
-                "lat": 39.36436850071403, 
-                "lng": 16.225999677909275
-            },
-            "capacity": {
-                "total_beds": 150,
-                "available_beds": 30
-            },
-            "current_patients": 120,
-            "specialties": ["Pediatrics", "Oncology", "Emergency Medicine"]
-        }
-    ]
+  "hospitals": [
+    {
+      "name": "Ospedale Annunziata",
+      "coordinates": {
+        "lat": 39.29372474588655,
+        "lng": 16.24845651575356
+      },
+      "capacity": {
+        "total_beds": 100,
+        "available_beds": 14
+      },
+      "current_patients": 86,
+      "reserved_until": [
+        "2026-05-22T18:38:51.325068",
+        "2026-05-22T18:39:53.646950",
+        "2026-05-22T18:41:16.540466",
+        "2026-05-22T18:41:18.572348",
+        "2026-05-22T18:54:11.190523",
+        "2026-05-22T16:01:32.884982"
+      ],
+      "specialties": [
+        "Cardiology",
+        "Neurology",
+        "Orthopedics",
+        "Trauma"
+      ]
+    },
+    {
+      "name": "Centro Sanitario Unical",
+      "coordinates": {
+        "lat": 39.36436850071403,
+        "lng": 16.225999677909275
+      },
+      "capacity": {
+        "total_beds": 150,
+        "available_beds": 30
+      },
+      "current_patients": 120,
+      "reserved_until": [],
+      "specialties": [
+        "Pediatrics",
+        "Oncology",
+        "Emergency Medicine"
+      ]
+    }
+  ]
 }

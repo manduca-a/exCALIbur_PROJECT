@@ -103,6 +103,87 @@ def _parse_int_field(v, field_name: str) -> int:
     raise ValueError(f"Cannot parse '{field_name}' as integer: received {v!r}")
 
 
+class HospitalBedManager:
+    """Manager class to handle hospital bed reservations in hospitals.json"""
+
+    @staticmethod
+    def reserve_bed(hospital_name: str, duration_minutes: int = 240):
+        """
+        Reserves one bed at the given hospital by decrementing available_beds
+        and adding a 'release_at' timestamp for that bed reservation.
+        Default reservation: 4 hours (240 min).
+        """
+        with open('hospitals.json', 'r') as f:
+            data = json.load(f)
+
+        for hosp in data['hospitals']:
+            if hosp['name'] == hospital_name:
+                if hosp['capacity']['available_beds'] > 0:
+                    hosp['capacity']['available_beds'] -= 1
+                    hosp['current_patients'] = hosp.get('current_patients', 0) + 1
+
+                    # Track reservation expiry times (multiple beds can be reserved)
+                    now = datetime.now()
+                    release_time = (now + timedelta(minutes=duration_minutes)).isoformat()
+                    hosp.setdefault('reserved_until', []).append(release_time)
+                    break
+                else:
+                    raise ValueError(f"Hospital '{hospital_name}' has no available beds.")
+
+        with open('hospitals.json', 'w') as f:
+            json.dump(data, f, indent=2)
+
+    @staticmethod
+    def release_bed(hospital_name: str):
+        """Releases one bed at the given hospital (incrementing available_beds)."""
+        with open('hospitals.json', 'r') as f:
+            data = json.load(f)
+
+        for hosp in data['hospitals']:
+            if hosp['name'] == hospital_name:
+                if hosp['capacity']['available_beds'] < hosp['capacity']['total_beds']:
+                    hosp['capacity']['available_beds'] += 1
+                    hosp['current_patients'] = max(0, hosp.get('current_patients', 0) - 1)
+                    break
+
+        with open('hospitals.json', 'w') as f:
+            json.dump(data, f, indent=2)
+
+    @staticmethod
+    def check_and_free_beds():
+        """
+        Periodically checks reserved beds and frees any whose reservation
+        time has expired.
+        """
+        with open('hospitals.json', 'r') as f:
+            data = json.load(f)
+
+        now = datetime.now()
+        updated = False
+
+        for hosp in data['hospitals']:
+            reservations = hosp.get('reserved_until', [])
+            still_active = []
+            freed = 0
+            for ts in reservations:
+                if datetime.fromisoformat(ts) > now:
+                    still_active.append(ts)
+                else:
+                    freed += 1
+
+            if freed > 0:
+                hosp['capacity']['available_beds'] = min(
+                    hosp['capacity']['total_beds'],
+                    hosp['capacity']['available_beds'] + freed
+                )
+                hosp['current_patients'] = max(0, hosp.get('current_patients', 0) - freed)
+                hosp['reserved_until'] = still_active
+                updated = True
+
+        if updated:
+            with open('hospitals.json', 'w') as f:
+                json.dump(data, f, indent=2)
+
 class AssignAmbulanceInput(BaseModel):
     ambulance_id: Union[int, str] = Field(
         ...,
@@ -459,3 +540,42 @@ class HospitalLocatorTool(BaseTool):
 
         except Exception as e:
             return f"Error during hospital location: {str(e)}"        
+        
+
+class ReserveHospitalBedInput(BaseModel):
+    hospital_name: str = Field(
+        ...,
+        description="The exact name of the hospital to reserve a bed at."
+    )
+    duration_minutes: Union[int, str] = Field(
+        240,
+        description="How long to hold the bed reservation (default 240 minutes / 4 hours)."
+    )
+
+    @field_validator('duration_minutes', mode='before')
+    @classmethod
+    def parse_duration(cls, v):
+        return _parse_int_field(v, 'duration_minutes')
+
+
+class ReserveHospitalBedTool(BaseTool):
+    name: str = "reserve_hospital_bed"
+    description: str = (
+        "Reserves one bed at a hospital after the hospital_locator has chosen it. "
+        "Decrements the hospital's available_beds. Call this AFTER selecting the "
+        "hospital and pass the hospital's exact name and the estimated mission "
+        "duration in minutes."
+    )
+    args_schema: Type[BaseModel] = ReserveHospitalBedInput
+
+    def _run(self, hospital_name: str, duration_minutes: int = 240) -> str:
+        try:
+            HospitalBedManager.reserve_bed(hospital_name, duration_minutes)
+            return (
+                f"✓ Bed reserved at '{hospital_name}' for {duration_minutes} minutes. "
+                f"The hospital's available_beds count has been decremented."
+            )
+        except ValueError as e:
+            return f"✗ {str(e)}"
+        except Exception as e:
+            return f"✗ Error reserving bed: {str(e)}"        
