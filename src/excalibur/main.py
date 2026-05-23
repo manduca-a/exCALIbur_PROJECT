@@ -11,7 +11,12 @@ from pathlib import Path
 
 from excalibur.crew import Excalibur
 from excalibur.simulator_crew import SimulatorCrew
-from excalibur.tools.custom_tool import AmbulanceStateManager, HospitalBedManager
+from excalibur.tools.custom_tool import (
+    AmbulanceStateManager,
+    HospitalBedManager,
+    AMBULANCES_FILE_LOCK,
+    HOSPITALS_FILE_LOCK,
+)
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
@@ -29,11 +34,13 @@ def load_json_file(path: Path) -> dict:
     with path.open("r", encoding="utf-8") as file:
         return json.load(file)
 
-
 def get_text_output(output) -> str:
     if hasattr(output, "raw"):
         return str(output.raw)
     return str(output)
+
+ambulances_file_lock = AMBULANCES_FILE_LOCK
+hospitals_file_lock = HOSPITALS_FILE_LOCK
 
 def background_ambulance_checker(stop_event: threading.Event):
     """
@@ -42,13 +49,22 @@ def background_ambulance_checker(stop_event: threading.Event):
     """
     while not stop_event.is_set():
         try:
-            AmbulanceStateManager.check_and_free_ambulances()
+            AmbulanceStateManager.check_and_free_ambulances(ambulances_file_lock)
         except Exception as e:
             print(f"Error in background ambulance checker: {e}")
         stop_event.wait(30)  # Check every 30 seconds, but wake early on shutdown
 
-ambulances_file_lock = threading.Lock()
-hospitals_file_lock = threading.Lock()
+def background_ambulance_mover(stop_event: threading.Event):
+    """
+    Background thread that simulates ambulances moving in the city.
+    Checks every 30 seconds and updates ambulance positions.
+    """
+    while not stop_event.is_set():
+        try:
+            AmbulanceStateManager.move_ambulances(ambulances_file_lock)
+        except Exception as e:
+            print(f"Error in background ambulance mover: {e}")
+        stop_event.wait(10)  # Check every 10 seconds, but wake early on shutdown
 
 
 def background_hospital_bed_checker(stop_event: threading.Event):
@@ -58,7 +74,7 @@ def background_hospital_bed_checker(stop_event: threading.Event):
     """
     while not stop_event.is_set():
         try:
-            HospitalBedManager.check_and_free_beds()
+            HospitalBedManager.check_and_free_beds(hospitals_file_lock)
         except Exception as e:
             print(f"Error in background hospital bed checker: {e}")
         stop_event.wait(60)  # Check every 60 seconds
@@ -143,6 +159,7 @@ def phone_line_simulator(stop_event: threading.Event, first_time=True):
             call_output = SimulatorCrew().crew().kickoff()
             call_transcription = get_text_output(call_output)
             
+            # TODO: Remove prints after debugging to avoid cluttering the console in long runs
             print(f"[System] Live Call Transcript received from Simulator for Call #{call_index}:\n\"{call_transcription}\"")
             
             # Spin up a separate thread for Excalibur processing to avoid blocking the main line loop
@@ -176,8 +193,17 @@ def run():
     checker_thread.start()
     print("Background ambulance checker started (checks every 30 seconds)")
 
+    # Start background ambulance mover thread
+    mover_thread = threading.Thread(
+        target=background_ambulance_mover,
+        daemon=True,
+        args=(stop_event,)
+    )
+    mover_thread.start()
+    print("Background ambulance mover started (simulates ambulance movement every 10 seconds)")
+
     # Start background hospital bed checker thread       
-    bed_checker_thread = threading.Thread(                
+    bed_checker_thread = threading.Thread(
         target=background_hospital_bed_checker,           
         daemon=True,                                       
         args=(stop_event,)                                 
@@ -207,7 +233,6 @@ def run():
         checker_thread.join(timeout=5)
         bed_checker_thread.join(timeout=5) 
         print("Shutdown signal sent to background threads.")
-
 
 def train():
     """

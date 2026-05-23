@@ -6,17 +6,15 @@ analysis_task:
     From the text above, extract:
     1. Patient's current location (address, intersection, landmark, or coordinates)
     2. Medical condition/category (cardiac, trauma, stroke, respiratory, etc.)
-    3. Urgency/severity level
-    4. Any special requirements (mobility assistance, pediatric care, etc.)
+    3. Any special requirements (mobility assistance, pediatric care, etc.)
     
     Structure the information clearly for handoff to other specialist agents.
   expected_output: >
     A structured intake assessment including:
     - Patient Location: [address or description]
     - Medical Condition Category: [type of emergency]
-    - Severity Level: [critical/high/medium]
     - Special Requirements: [any specific needs]
-    - Call Summary: [brief assessment]
+    - Call Summary: [very brief assessment]
   agent: analyzer
 
 dispatch_task:
@@ -49,6 +47,33 @@ dispatch_task:
     A clear dispatch order stating the chosen Ambulance ID, its ETA in minutes, 
     and a brief justification based on the traffic analysis.
   agent: ambulance_dispatcher
+
+hospital_locator_task:
+  description: >
+    Based on the patient's medical condition and location from the previous tasks,
+    find the best receiving hospital AND reserve a bed there.
+
+    Here is the list of available hospitals:
+    {hospitals}
+
+    MANDATORY SEQUENCE:
+    1. Call the "Hospital Locator Tool" to find the best matching hospital
+       (filter by free beds + specialty match + lowest ETA).
+    2. AFTER you have the result, call "reserve_hospital_bed" with the exact
+       hospital name to decrement its available_beds counter.
+
+    Return the chosen hospital with full justification.
+  expected_output: >
+    A structured hospital assignment including:
+    - Selected Hospital: [name]
+    - Address: [address]
+    - Available Beds: [number, BEFORE reservation]
+    - Matching Specialization: [specialty]
+    - Estimated Travel Time: [ETA]
+    - Bed Reserved: yes/no
+    - Justification: [very briefreasoning]
+  agent: hospital_locator
+
 rehabilitation_task:
   description: >
     Based on the complete emergency case information gathered in the previous tasks,
@@ -93,7 +118,7 @@ rehabilitation_task:
     For HIGH severity: provide a complete plan with clinical justifications.
     For MEDIUM severity: focus on outpatient recovery and lifestyle guidance.
   expected_output: >
-    A structured rehabilitation report in Markdown format containing all five
+    A brief and structured rehabilitation report in Markdown format containing all five
     sections listed above. The report must be:
     - Clinically grounded and coherent with the emergency type
     - Clearly labeled with section headers
@@ -101,33 +126,3 @@ rehabilitation_task:
     - Realistic in timeline estimates based on the severity level
     - Professional in tone but accessible to care coordinators
   agent: rehabilitation_specialist
- 
-  # TODO: add more tasks for the other agents ( ambulance locator, hospital locator)
-
-hospital_locator_task:
-  description: >
-    Based on the patient's medical condition and location from the previous tasks,
-    find the best receiving hospital AND reserve a bed there.
-
-    Here is the list of available hospitals:
-    {hospitals}
-
-    MANDATORY SEQUENCE:
-    1. Call the "Hospital Locator Tool" to find the best matching hospital
-       (filter by free beds + specialty match + lowest ETA).
-    2. AFTER you have the result, call "reserve_hospital_bed" with the exact
-       hospital name to decrement its available_beds counter.
-
-    Return the chosen hospital with full justification.
-  expected_output: >
-    A structured hospital assignment including:
-    - Selected Hospital: [name]
-    - Address: [address]
-    - Available Beds: [number, BEFORE reservation]
-    - Matching Specialization: [specialty]
-    - Estimated Travel Time: [ETA]
-    - Bed Reserved: yes/no
-    - Justification: [reasoning]
-  agent: hospital_locator
-
-  # TODO: add more tasks for the other agents (actor, ambulance locator, hospital locator)

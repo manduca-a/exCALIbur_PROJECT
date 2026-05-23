@@ -6,10 +6,18 @@ import json
 import requests
 import ast
 import re
+from pathlib import Path
 from dotenv import load_dotenv
+import random
+import threading
 
 load_dotenv()
 
+ROOT_DIR = Path(__file__).resolve().parents[3]
+AMBULANCES_PATH = ROOT_DIR / "ambulances.json"
+HOSPITALS_PATH = ROOT_DIR / "hospitals.json"
+AMBULANCES_FILE_LOCK = threading.Lock()
+HOSPITALS_FILE_LOCK = threading.Lock()
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
 ROUTES_API_URL = "https://routes.googleapis.com/directions/v2:computeRoutes"
 
@@ -19,57 +27,107 @@ class AmbulanceStateManager:
     """Manager class to handle ambulance states in the ambulances.json file"""
     
     @staticmethod
-    def assign_ambulance(ambulance_id: int, duration_minutes: int):
+    def assign_ambulance(ambulance_id: int, duration_minutes: int, lock: threading.Lock | None = None):
         """
         Assigns an ambulance by marking it as 'occupied' and setting the expected free time based on the mission duration.
         """
-        with open('ambulances.json', 'r') as f:
-            data = json.load(f)
-        
-        for amb in data['ambulances']:
-            if amb['id'] == ambulance_id:
-                now = datetime.now()
-                amb['state'] = 'occupied'
-                amb['occupied_until'] = (now + timedelta(minutes=duration_minutes)).isoformat()
-                break
-        
-        with open('ambulances.json', 'w') as f:
-            json.dump(data, f, indent=2)
+        if lock is None:
+            lock = AMBULANCES_FILE_LOCK
+
+        with lock:
+            with AMBULANCES_PATH.open('r', encoding='utf-8') as f:
+                data = json.load(f)
+
+            for amb in data['ambulances']:
+                if amb['id'] == ambulance_id:
+                    now = datetime.now()
+                    amb['state'] = 'occupied'
+                    amb['occupied_until'] = (now + timedelta(minutes=duration_minutes)).isoformat()
+                    break
+
+            with AMBULANCES_PATH.open('w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2)
     
     @staticmethod
-    def release_ambulance(ambulance_id: int):
+    def release_ambulance(ambulance_id: int, lock: threading.Lock | None = None):
         """Releases an ambulance, marking it as 'available'"""
-        with open('ambulances.json', 'r') as f:
-            data = json.load(f)
-        
-        for amb in data['ambulances']:
-            if amb['id'] == ambulance_id:
-                amb['state'] = 'available'
-                amb['occupied_until'] = None
-                break
-        
-        with open('ambulances.json', 'w') as f:
-            json.dump(data, f, indent=2)
-    
-    @staticmethod
-    def check_and_free_ambulances():
-        """Periodically checks if occupied ambulances can become available"""
-        with open('ambulances.json', 'r') as f:
-            data = json.load(f)
-        
-        now = datetime.now()
-        updated = False
-        
-        for amb in data['ambulances']:
-            if amb['state'] == 'occupied' and amb['occupied_until']:
-                occupied_until = datetime.fromisoformat(amb['occupied_until'])
-                if now >= occupied_until:
+        if lock is None:
+            lock = AMBULANCES_FILE_LOCK
+
+        with lock:
+            with AMBULANCES_PATH.open('r', encoding='utf-8') as f:
+                data = json.load(f)
+
+            for amb in data['ambulances']:
+                if amb['id'] == ambulance_id:
                     amb['state'] = 'available'
                     amb['occupied_until'] = None
-                    updated = True
-        
-        if updated:
-            with open('ambulances.json', 'w') as f:
+                    break
+
+            with AMBULANCES_PATH.open('w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2)
+    
+    @staticmethod
+    def check_and_free_ambulances(lock: threading.Lock | None = None):
+        """Periodically checks if occupied ambulances can become available"""
+        if lock is None:
+            lock = AMBULANCES_FILE_LOCK
+
+        with lock:
+            with AMBULANCES_PATH.open('r', encoding='utf-8') as f:
+                data = json.load(f)
+
+            now = datetime.now()
+            updated = False
+
+            for amb in data['ambulances']:
+                if amb['state'] == 'occupied' and amb['occupied_until']:
+                    occupied_until = datetime.fromisoformat(amb['occupied_until'])
+                    if now >= occupied_until:
+                        amb['state'] = 'available'
+                        amb['occupied_until'] = None
+                        updated = True
+
+            if updated:
+                with AMBULANCES_PATH.open('w', encoding='utf-8') as f:
+                    json.dump(data, f, indent=2)
+
+    @staticmethod
+    def move_ambulances(lock: threading.Lock | None = None):
+        """Simulates ambulances moving towards their destinations by updating their coordinates"""
+        if lock is None:
+            lock = AMBULANCES_FILE_LOCK
+
+        with lock:
+            with AMBULANCES_PATH.open('r', encoding='utf-8') as f:
+                data = json.load(f)
+
+            for amb in data.get('ambulances', []):
+                if amb.get('state') != 'available':
+                    continue
+
+                coords = amb.get('coordinates')
+                if isinstance(coords, dict):
+                    lat = float(coords.get('lat', coords.get('latitude', 0)))
+                    lng = float(coords.get('lng', coords.get('longitude', 0)))
+                    symb = 1 if random.random() < 0.5 else -1
+                    lat += 0.001 * symb
+                    lng += 0.001 * symb
+                    amb['coordinates'] = {
+                        'lat': round(lat, 6),
+                        'lng': round(lng, 6),
+                    }
+                elif isinstance(coords, str):
+                    lat, lng = map(float, coords.split(','))
+                    symb = 1 if random.random() < 0.5 else -1
+                    lat += 0.001 * symb
+                    lng += 0.001 * symb
+                    amb['coordinates'] = f"{lat:.6f},{lng:.6f}"
+                else:
+                    # Preserve data if the coordinate format is unexpected
+                    continue
+
+            with AMBULANCES_PATH.open('w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2)
 
 def _parse_int_field(v, field_name: str) -> int:
@@ -107,82 +165,94 @@ class HospitalBedManager:
     """Manager class to handle hospital bed reservations in hospitals.json"""
 
     @staticmethod
-    def reserve_bed(hospital_name: str, duration_minutes: int = 240):
+    def reserve_bed(hospital_name: str, duration_minutes: int = 240, lock: threading.Lock | None = None):
         """
         Reserves one bed at the given hospital by decrementing available_beds
         and adding a 'release_at' timestamp for that bed reservation.
         Default reservation: 4 hours (240 min).
         """
-        with open('hospitals.json', 'r') as f:
-            data = json.load(f)
+        if lock is None:
+            lock = HOSPITALS_FILE_LOCK
 
-        for hosp in data['hospitals']:
-            if hosp['name'] == hospital_name:
-                if hosp['capacity']['available_beds'] > 0:
-                    hosp['capacity']['available_beds'] -= 1
-                    hosp['current_patients'] = hosp.get('current_patients', 0) + 1
+        with lock:
+            with HOSPITALS_PATH.open('r', encoding='utf-8') as f:
+                data = json.load(f)
 
-                    # Track reservation expiry times (multiple beds can be reserved)
-                    now = datetime.now()
-                    release_time = (now + timedelta(minutes=duration_minutes)).isoformat()
-                    hosp.setdefault('reserved_until', []).append(release_time)
-                    break
-                else:
-                    raise ValueError(f"Hospital '{hospital_name}' has no available beds.")
+            for hosp in data['hospitals']:
+                if hosp['name'] == hospital_name:
+                    if hosp['capacity']['available_beds'] > 0:
+                        hosp['capacity']['available_beds'] -= 1
+                        hosp['current_patients'] = hosp.get('current_patients', 0) + 1
 
-        with open('hospitals.json', 'w') as f:
-            json.dump(data, f, indent=2)
+                        # Track reservation expiry times (multiple beds can be reserved)
+                        now = datetime.now()
+                        release_time = (now + timedelta(minutes=duration_minutes)).isoformat()
+                        hosp.setdefault('reserved_until', []).append(release_time)
+                        break
+                    else:
+                        raise ValueError(f"Hospital '{hospital_name}' has no available beds.")
+
+            with HOSPITALS_PATH.open('w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2)
 
     @staticmethod
-    def release_bed(hospital_name: str):
+    def release_bed(hospital_name: str, lock: threading.Lock | None = None):
         """Releases one bed at the given hospital (incrementing available_beds)."""
-        with open('hospitals.json', 'r') as f:
-            data = json.load(f)
+        if lock is None:
+            lock = HOSPITALS_FILE_LOCK
 
-        for hosp in data['hospitals']:
-            if hosp['name'] == hospital_name:
-                if hosp['capacity']['available_beds'] < hosp['capacity']['total_beds']:
-                    hosp['capacity']['available_beds'] += 1
-                    hosp['current_patients'] = max(0, hosp.get('current_patients', 0) - 1)
-                    break
+        with lock:
+            with HOSPITALS_PATH.open('r', encoding='utf-8') as f:
+                data = json.load(f)
 
-        with open('hospitals.json', 'w') as f:
-            json.dump(data, f, indent=2)
+            for hosp in data['hospitals']:
+                if hosp['name'] == hospital_name:
+                    if hosp['capacity']['available_beds'] < hosp['capacity']['total_beds']:
+                        hosp['capacity']['available_beds'] += 1
+                        hosp['current_patients'] = max(0, hosp.get('current_patients', 0) - 1)
+                        break
+
+            with HOSPITALS_PATH.open('w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2)
 
     @staticmethod
-    def check_and_free_beds():
+    def check_and_free_beds(lock: threading.Lock | None = None):
         """
         Periodically checks reserved beds and frees any whose reservation
         time has expired.
         """
-        with open('hospitals.json', 'r') as f:
-            data = json.load(f)
+        if lock is None:
+            lock = HOSPITALS_FILE_LOCK
 
-        now = datetime.now()
-        updated = False
+        with lock:
+            with HOSPITALS_PATH.open('r', encoding='utf-8') as f:
+                data = json.load(f)
 
-        for hosp in data['hospitals']:
-            reservations = hosp.get('reserved_until', [])
-            still_active = []
-            freed = 0
-            for ts in reservations:
-                if datetime.fromisoformat(ts) > now:
-                    still_active.append(ts)
-                else:
-                    freed += 1
+            now = datetime.now()
+            updated = False
 
-            if freed > 0:
-                hosp['capacity']['available_beds'] = min(
-                    hosp['capacity']['total_beds'],
-                    hosp['capacity']['available_beds'] + freed
-                )
-                hosp['current_patients'] = max(0, hosp.get('current_patients', 0) - freed)
-                hosp['reserved_until'] = still_active
-                updated = True
+            for hosp in data['hospitals']:
+                reservations = hosp.get('reserved_until', [])
+                still_active = []
+                freed = 0
+                for ts in reservations:
+                    if datetime.fromisoformat(ts) > now:
+                        still_active.append(ts)
+                    else:
+                        freed += 1
 
-        if updated:
-            with open('hospitals.json', 'w') as f:
-                json.dump(data, f, indent=2)
+                if freed > 0:
+                    hosp['capacity']['available_beds'] = min(
+                        hosp['capacity']['total_beds'],
+                        hosp['capacity']['available_beds'] + freed
+                    )
+                    hosp['current_patients'] = max(0, hosp.get('current_patients', 0) - freed)
+                    hosp['reserved_until'] = still_active
+                    updated = True
+
+            if updated:
+                with HOSPITALS_PATH.open('w', encoding='utf-8') as f:
+                    json.dump(data, f, indent=2)
 
 class AssignAmbulanceInput(BaseModel):
     ambulance_id: Union[int, str] = Field(

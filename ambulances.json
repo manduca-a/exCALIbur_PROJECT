@@ -4,8 +4,8 @@
       "id": 1,
       "name": "Ambulance 1",
       "coordinates": {
-        "lat": 39.35055330565161,
-        "lng": 16.246699439904933
+        "lat": 39.345553,
+        "lng": 16.241699
       },
       "state": "available",
       "occupied_until": null
@@ -14,11 +14,11 @@
       "id": 2,
       "name": "Ambulance 2",
       "coordinates": {
-        "lat": 39.358583134816925,
-        "lng": 16.23734429272705
+        "lat": 39.361583,
+        "lng": 16.240344
       },
-      "state": "available",
-      "occupied_until": null
+      "state": "occupied",
+      "occupied_until": "2026-05-23T12:16:50.105772"
     },
     {
       "id": 3,
@@ -34,8 +34,8 @@
       "id": 4,
       "name": "Ambulance 4",
       "coordinates": {
-        "lat": 39.34458313481692,
-        "lng": 16.23734429272705
+        "lat": 39.343583,
+        "lng": 16.236344
       },
       "state": "available",
       "occupied_until": null
@@ -44,8 +44,8 @@
       "id": 5,
       "name": "Ambulance 5",
       "coordinates": {
-        "lat": 39.34171623757017,
-        "lng": 16.244047503222443
+        "lat": 39.344716,
+        "lng": 16.247048
       },
       "state": "available",
       "occupied_until": null
@@ -54,8 +54,8 @@
       "id": 6,
       "name": "Ambulance 6",
       "coordinates": {
-        "lat": 39.353651530434135,
-        "lng": 16.238672807033183
+        "lat": 39.356652,
+        "lng": 16.241673
       },
       "state": "available",
       "occupied_until": null
