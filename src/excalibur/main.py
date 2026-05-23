@@ -79,7 +79,7 @@ def background_hospital_bed_checker(stop_event: threading.Event):
             print(f"Error in background hospital bed checker: {e}")
         stop_event.wait(60)  # Check every 60 seconds
 
-def process_emergency_in_parallel(call_index, call_transcription, stop_event: threading.Event):
+def process_emergency_in_parallel(call_index: int, call_transcription: str, stop_event: threading.Event):
     """
     Worker function executed inside a dedicated thread to process a single medical emergency
     without locking the main telephone simulator line.
@@ -136,7 +136,7 @@ def process_emergency_in_parallel(call_index, call_transcription, stop_event: th
         print(f"[FULL TRACEBACK]")
         traceback.print_exc()
 
-def phone_line_simulator(stop_event: threading.Event, first_time=True):
+def phone_line_simulator(stop_event: threading.Event, first_time: bool = True):
     """
     Infinite loop thread simulating real incoming emergency phone calls at random intervals.
     Each incoming call triggers a separate Excalibur instance to process the crisis concurrently.
@@ -148,7 +148,7 @@ def phone_line_simulator(stop_event: threading.Event, first_time=True):
         try:
             
             seconds_to_wait = random.randint(60,90)                
-            sys.stdout.write(f"\r[System] Next emergency call #{call_index} will arrive in {seconds_to_wait} seconds... ")
+            sys.stdout.write(f"\r[System] Next emergency call #{call_index} will arrive in {seconds_to_wait} seconds... \n")
             
             if stop_event.wait(seconds_to_wait):
                 break
@@ -220,7 +220,7 @@ def run():
         args=(stop_event, True),
     )
     phone_thread.start()
-    print("Autonomous phone line simulator started")
+    print("\nAutonomous phone line simulator started")
 
     # Keep the main process alive to allow background daemon threads to execute
     try:

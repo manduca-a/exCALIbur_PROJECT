@@ -1,5 +1,5 @@
 from crewai.tools import BaseTool
-from typing import Type, Union
+from typing import Type, Union, Optional
 from pydantic import BaseModel, Field, field_validator
 import os
 import json
@@ -27,7 +27,7 @@ class AmbulanceStateManager:
     """Manager class to handle ambulance states in the ambulances.json file"""
     
     @staticmethod
-    def assign_ambulance(ambulance_id: int, duration_minutes: int, lock: threading.Lock | None = None):
+    def assign_ambulance(ambulance_id: int, duration_minutes: int, lock: Optional[threading.Lock] = None):
         """
         Assigns an ambulance by marking it as 'occupied' and setting the expected free time based on the mission duration.
         """
@@ -49,7 +49,7 @@ class AmbulanceStateManager:
                 json.dump(data, f, indent=2)
     
     @staticmethod
-    def release_ambulance(ambulance_id: int, lock: threading.Lock | None = None):
+    def release_ambulance(ambulance_id: int, lock: Optional[threading.Lock] = None):
         """Releases an ambulance, marking it as 'available'"""
         if lock is None:
             lock = AMBULANCES_FILE_LOCK
@@ -68,7 +68,7 @@ class AmbulanceStateManager:
                 json.dump(data, f, indent=2)
     
     @staticmethod
-    def check_and_free_ambulances(lock: threading.Lock | None = None):
+    def check_and_free_ambulances(lock: Optional[threading.Lock] = None):
         """Periodically checks if occupied ambulances can become available"""
         if lock is None:
             lock = AMBULANCES_FILE_LOCK
@@ -93,7 +93,7 @@ class AmbulanceStateManager:
                     json.dump(data, f, indent=2)
 
     @staticmethod
-    def move_ambulances(lock: threading.Lock | None = None):
+    def move_ambulances(lock: Optional[threading.Lock] = None):
         """Simulates ambulances moving towards their destinations by updating their coordinates"""
         if lock is None:
             lock = AMBULANCES_FILE_LOCK
@@ -165,7 +165,7 @@ class HospitalBedManager:
     """Manager class to handle hospital bed reservations in hospitals.json"""
 
     @staticmethod
-    def reserve_bed(hospital_name: str, duration_minutes: int = 240, lock: threading.Lock | None = None):
+    def reserve_bed(hospital_name: str, duration_minutes: int = 240, lock: Optional[threading.Lock] = None):
         """
         Reserves one bed at the given hospital by decrementing available_beds
         and adding a 'release_at' timestamp for that bed reservation.
@@ -196,7 +196,7 @@ class HospitalBedManager:
                 json.dump(data, f, indent=2)
 
     @staticmethod
-    def release_bed(hospital_name: str, lock: threading.Lock | None = None):
+    def release_bed(hospital_name: str, lock: Optional[threading.Lock] = None):
         """Releases one bed at the given hospital (incrementing available_beds)."""
         if lock is None:
             lock = HOSPITALS_FILE_LOCK
@@ -216,7 +216,7 @@ class HospitalBedManager:
                 json.dump(data, f, indent=2)
 
     @staticmethod
-    def check_and_free_beds(lock: threading.Lock | None = None):
+    def check_and_free_beds(lock: Optional[threading.Lock] = None):
         """
         Periodically checks reserved beds and frees any whose reservation
         time has expired.
@@ -306,7 +306,6 @@ class AssignAmbulanceTool(BaseTool):
             f"occupied for {duration_minutes} minutes."
         )
     
-
 class AmbulanceEtaTool(BaseTool):
     name: str = "Google Maps Traffic ETA Calculator"
     description: str = (

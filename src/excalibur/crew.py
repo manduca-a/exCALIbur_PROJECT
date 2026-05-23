@@ -19,6 +19,14 @@ class Excalibur():
     tasks: list[Task]
 
     @agent
+    def supervisor(self) -> Agent:
+        return Agent(
+            config=self.agents_config['supervisor'],
+            llm=groq_llm,
+            verbose=True
+        )
+
+    @agent
     def analyzer(self) -> Agent:
         return Agent(
             config=self.agents_config['analyzer'],
@@ -62,26 +70,32 @@ class Excalibur():
     def dispatch_task(self) -> Task:
         return Task(
             config=self.tasks_config['dispatch_task'],
+            context=[self.analysis_task()],
         )
 
     @task
     def hospital_locator_task(self) -> Task:
         return Task(
             config=self.tasks_config['hospital_locator_task'],
+            context=[self.analysis_task()],
         )
 
     @task
     def rehabilitation_task(self) -> Task:
         return Task(
             config=self.tasks_config['rehabilitation_task'],
+            context=[self.analysis_task(), self.hospital_locator_task(), self.dispatch_task()]
         )
 
     @crew
     def crew(self) -> Crew:
         """Creates the Excalibur crew"""
+        manager = self.supervisor()
+        workers = [agent for agent in self.agents if agent != manager]
         return Crew(
-            agents=self.agents,
+            agents=workers,
             tasks=self.tasks,
-            process=Process.sequential,
+            process=Process.hierarchical,
+            manager_agent=manager,
             verbose=True,
         )

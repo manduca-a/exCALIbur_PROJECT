@@ -8,13 +8,10 @@
       },
       "capacity": {
         "total_beds": 100,
-        "available_beds": 18
+        "available_beds": 20
       },
-      "current_patients": 82,
-      "reserved_until": [
-        "2026-05-23T11:56:38.345370",
-        "2026-05-23T12:16:51.336369"
-      ],
+      "current_patients": 80,
+      "reserved_until": [],
       "specialties": [
         "Cardiology",
         "Neurology",
