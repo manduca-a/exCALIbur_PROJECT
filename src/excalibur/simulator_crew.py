@@ -2,7 +2,7 @@ from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 
-from .llm_config import groq_llm
+from .llm_config import big_llm, medium_llm
 
 
 @CrewBase
@@ -19,8 +19,8 @@ class SimulatorCrew():
     def emergency_caller_simulator(self) -> Agent:
         return Agent(
             config=self.agents_config['emergency_caller_simulator'],
-            llm=groq_llm,
-            verbose=True
+            llm=medium_llm,
+            verbose=False
         )
 
     @task

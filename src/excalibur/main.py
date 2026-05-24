@@ -7,6 +7,7 @@ import threading
 import time
 import random
 from pathlib import Path
+import os
 
 
 from excalibur.crew import Excalibur
@@ -126,6 +127,7 @@ def process_emergency_in_parallel(call_index: int, call_transcription: str, stop
             'hospitals': json.dumps(hospitals_data_str)
         }
         
+        time.sleep(5)  # Simulate brief processing delay before starting the crew
         print(f"[Thread-Call-{call_index}] Excalibur Crew is now processing Call #{call_index}...")
         Excalibur().crew().kickoff(inputs=inputs)
         print(f"[Thread-Call-{call_index}] Emergency Call #{call_index} successfully processed.")
@@ -146,10 +148,17 @@ def phone_line_simulator(stop_event: threading.Event, first_time: bool = True):
     
     while not stop_event.is_set():
         try:
-            
-            seconds_to_wait = random.randint(60,90)                
-            sys.stdout.write(f"\r[System] Next emergency call #{call_index} will arrive in {seconds_to_wait} seconds... \n")
-            
+            if first_time:
+                seconds_to_wait = 0
+                first_time = False
+            else:
+                seconds_to_wait = random.randint(120, 180)
+
+            if seconds_to_wait > 0:
+                sys.stdout.write(f"\r[System] Next emergency call #{call_index} will arrive in {seconds_to_wait} seconds... \n")
+            else:
+                sys.stdout.write(f"\r[System] First emergency call #{call_index} is starting immediately... \n")
+
             if stop_event.wait(seconds_to_wait):
                 break
             
@@ -233,6 +242,7 @@ def run():
         checker_thread.join(timeout=5)
         bed_checker_thread.join(timeout=5) 
         print("Shutdown signal sent to background threads.")
+        os._exit(0)
 
 def train():
     """

@@ -2,13 +2,14 @@ from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 
+
 from .tools.custom_tool import (
     AmbulanceEtaTool,
     AssignAmbulanceTool,
     HospitalLocatorTool,
     ReserveHospitalBedTool,
 )
-from .llm_config import groq_llm
+from .llm_config import big_llm, small_llm
 
 
 @CrewBase
@@ -22,15 +23,15 @@ class Excalibur():
     def supervisor(self) -> Agent:
         return Agent(
             config=self.agents_config['supervisor'],
-            llm=groq_llm,
-            verbose=True
+            llm=big_llm,
+            verbose=False
         )
 
     @agent
     def analyzer(self) -> Agent:
         return Agent(
             config=self.agents_config['analyzer'],
-            llm=groq_llm,
+            llm=small_llm,
             verbose=True
         )
 
@@ -39,7 +40,7 @@ class Excalibur():
         return Agent(
             config=self.agents_config['ambulance_dispatcher'],
             tools=[AmbulanceEtaTool(), AssignAmbulanceTool()],
-            llm=groq_llm,
+            llm=small_llm,
             verbose=True
         )
 
@@ -48,7 +49,7 @@ class Excalibur():
         return Agent(
             config=self.agents_config['hospital_locator'],
             tools=[HospitalLocatorTool(), ReserveHospitalBedTool()],
-            llm=groq_llm,
+            llm=small_llm,
             verbose=True
         )
 
@@ -56,7 +57,7 @@ class Excalibur():
     def rehabilitation_specialist(self) -> Agent:
         return Agent(
             config=self.agents_config['rehabilitation_specialist'],
-            llm=groq_llm,
+            llm=big_llm,
             verbose=True
         )
 
@@ -69,22 +70,19 @@ class Excalibur():
     @task
     def dispatch_task(self) -> Task:
         return Task(
-            config=self.tasks_config['dispatch_task'],
-            context=[self.analysis_task()],
+            config=self.tasks_config['dispatch_task']
         )
 
     @task
     def hospital_locator_task(self) -> Task:
         return Task(
-            config=self.tasks_config['hospital_locator_task'],
-            context=[self.analysis_task()],
+            config=self.tasks_config['hospital_locator_task']
         )
 
     @task
     def rehabilitation_task(self) -> Task:
         return Task(
-            config=self.tasks_config['rehabilitation_task'],
-            context=[self.analysis_task(), self.hospital_locator_task(), self.dispatch_task()]
+            config=self.tasks_config['rehabilitation_task']
         )
 
     @crew
