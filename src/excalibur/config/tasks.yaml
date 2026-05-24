@@ -18,58 +18,47 @@ analysis_task:
 dispatch_task:
   description: >
     MANDATORY SEQUENCE:
-    1. Call google_maps_traffic_eta_calculator FIRST and wait for the result.
+    1. Call Google Maps Traffic ETA Calculator FIRST using the patient's location identified in the previous analysis_task. Wait for the result.
     2. ONLY AFTER reading the ETA result, identify the ambulance with the lowest ETA.
-    3. THEN and only then call assign_ambulance with that ambulance.
+    3. THEN call assign_ambulance with that ambulance ID and its ETA duration to mark it as occupied.
     Do NOT call assign_ambulance before receiving ETA results.
-    Review the patient's location identified in the previous analysis_task.
-    
-    Here is the live data of our currently available ambulance fleet:
-    {ambulances}
-    
-    Use the "Google Maps Traffic ETA Calculator" tool to evaluate all these available units.
-    You must format the fleet data exactly as the tool requests.
-    Dispatch the ambulance with the lowest Estimated Time of Arrival (ETA).
-
-    Then, use the tool to set the chosen ambulance's status to "occupied" for the duration of the mission, which includes:
-    - Travel time to the patient (from the ETA calculation)
-    - On-site service time (assume 5 minutes)
-    - Hospital reaching time (assume 8 minutes)
-    - Services time at the hospital (assume 2 minutes)
-    IMPORTANT: You MUST compute the sum yourself before calling the tool.
-    Example: if ETA=14, the total is 14+5+8+2=29, so pass duration_minutes=29 (NOT "14+5+8+2").
-    Never pass a mathematical expression — only the final computed integer.
-
   expected_output: >
-    Do the mathematical sum of these values yourself and provide ONLY the final integer total to the tool parameters. Do not pass mathematical expressions
-    A clear dispatch order stating the chosen Ambulance ID, its ETA in minutes, 
-    and a brief justification based on the traffic analysis.
+    A structured dispatch report including:
+    - Dispatched Ambulance ID: [ID]
+    - Estimated Time of Arrival: [ETA in minutes]
   agent: ambulance_dispatcher
 
 hospital_locator_task:
   description: >
-    Based on the patient's medical condition and location from the analysis tasks,
-    find the best receiving hospital AND reserve a bed there.
+    Your task is to identify the best hospital for the patient and secure a bed.
 
-    Here is the list of available hospitals:
-    {hospitals}
+    1. EXECUTE TOOL: Call "Hospital Locator Tool" with these parameters:
+       - patient_address: (extract from previous analysis_task)
+       - required_specialty: (category identified in previous analysis_task)
+       *This tool will load hospital states and perform the Google Maps distance matrix calculation.*
 
-    MANDATORY SEQUENCE:
-    1. Call the "Hospital Locator Tool" to find the best matching hospital
-       (filter by free beds + specialty match + lowest ETA).
-    2. AFTER you have the result, call "reserve_hospital_bed" with the exact
-       hospital name to decrement its available_beds counter.
+    2. ANALYZE RESULTS: Wait for the tool's output. Identify the hospital with the best ETA, capacity, and specialty match.
 
-    Return the chosen hospital with full justification.
+    3. RESERVE BED: Call "reserve_hospital_bed" using the exact name of the selected hospital.
+
+    4. OCCUPY AMBULANCE: Retrieve the "Dispatched Ambulance ID" from the dispatch_task output and call "occupy_ambulance_for_hospital" with:
+       - ambulance_id: (integer)
+       - duration_minutes: (ETA in minutes from the locator tool's report)
+       - selected_hospital_id: (integer, found in the locator tool's output)
+
+    CRITICAL: Do not attempt to use any search tools. Rely strictly on the output provided by the "Hospital Locator Tool".
+
   expected_output: >
-    A structured hospital assignment including:
-    - Selected Hospital: [name]
+    A structured assignment report:
+    - Selected Hospital Name: [name]
+    - Selected Hospital ID: [ID]
     - Address: [address]
-    - Available Beds: [number, BEFORE reservation]
+    - Coordinates: [lat, long]
+    - Available Beds: [number before reservation]
     - Matching Specialization: [specialty]
     - Estimated Travel Time: [ETA]
-    - Bed Reserved: yes/no
-    - Justification: [very briefreasoning]
+    - Bed Reserved: yes
+    - Justification: [brief reasoning based on ETA and specialty]
   agent: hospital_locator
 
 rehabilitation_task:

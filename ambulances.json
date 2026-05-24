@@ -4,61 +4,67 @@
       "id": 1,
       "name": "Ambulance 1",
       "coordinates": {
-        "lat": 39.296553,
-        "lng": 16.192699
+        "lat": 39.319653,
+        "lng": 16.215799
       },
       "state": "available",
-      "occupied_until": null
+      "occupied_until": null,
+      "selected_for_hospital": null
     },
     {
       "id": 2,
       "name": "Ambulance 2",
       "coordinates": {
-        "lat": 39.306583,
-        "lng": 16.185344
+        "lat": 39.394783,
+        "lng": 16.273544
       },
       "state": "available",
-      "occupied_until": null
+      "occupied_until": null,
+      "selected_for_hospital": null
     },
     {
       "id": 3,
       "name": "Ambulance 3",
       "coordinates": {
-        "lat": 39.317675,
-        "lng": 16.198925
+        "lat": 39.376775,
+        "lng": 16.258025
       },
       "state": "available",
-      "occupied_until": null
+      "occupied_until": null,
+      "selected_for_hospital": null
     },
     {
       "id": 4,
       "name": "Ambulance 4",
       "coordinates": {
-        "lat": 39.308583,
-        "lng": 16.201344
+        "lat": 39.397183,
+        "lng": 16.289944
       },
       "state": "available",
-      "occupied_until": null
+      "occupied_until": null,
+      "selected_for_hospital": null
     },
     {
       "id": 5,
       "name": "Ambulance 5",
       "coordinates": {
-        "lat": 39.370716,
-        "lng": 16.273048
+        "lat": 39.301716,
+        "lng": 16.204048
       },
-      "state": "occupied",
-      "occupied_until": "2026-05-24T19:04:41.391490"
+      "state": "available",
+      "occupied_until": null,
+      "selected_for_hospital": null
     },
     {
       "id": 6,
       "name": "Ambulance 6",
       "coordinates": {
-        "lat": 39.335652,
-        "lng": 16.220673
+        "lat": 39.405652,
+        "lng": 16.290673
       },
       "state": "available",
-      "occupied_until": null
+      "occupied_until": null,
+      "selected_for_hospital": null
     }
   ]
 }

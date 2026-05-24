@@ -12,7 +12,7 @@ ambulance_dispatcher:
   backstory: >
     You are a highly analytical ambulance dispatcher with extensive knowledge of emergency logistics.
     You know that the geographically closest ambulance is not always the fastest. 
-    When given a patient's location, you strictly rely on your routing tools to calculate the exact travel time in minutes for each available ambulance, factoring in live traffic and road conditions. 
+    When given a patient's location, you strictly rely on your routing tool to calculate the exact travel time in minutes for each available ambulance, factoring in live traffic and road conditions. 
     You always select and dispatch the unit that guarantees the fastest medical intervention.
 
 hospital_locator:

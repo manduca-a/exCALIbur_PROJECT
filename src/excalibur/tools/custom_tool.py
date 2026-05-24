@@ -1,5 +1,5 @@
 from crewai.tools import BaseTool
-from typing import Type, Union, Optional
+from typing import Optional, Type, Union
 from pydantic import BaseModel, Field, field_validator
 import os
 import json
@@ -27,7 +27,7 @@ class AmbulanceStateManager:
     """Manager class to handle ambulance states in the ambulances.json file"""
     
     @staticmethod
-    def assign_ambulance(ambulance_id: int, duration_minutes: int, lock: Optional[threading.Lock] = None):
+    def assign_ambulance(ambulance_id: int, duration_minutes: int, selected_hospital_id: Optional[int] = 0, lock: Optional[threading.Lock] = None):
         """
         Assigns an ambulance by marking it as 'occupied' and setting the expected free time based on the mission duration.
         """
@@ -42,26 +42,13 @@ class AmbulanceStateManager:
                 if amb['id'] == ambulance_id:
                     now = datetime.now()
                     amb['state'] = 'occupied'
-                    amb['occupied_until'] = (now + timedelta(minutes=duration_minutes)).isoformat()
-                    break
-
-            with AMBULANCES_PATH.open('w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2)
-    
-    @staticmethod
-    def release_ambulance(ambulance_id: int, lock: Optional[threading.Lock] = None):
-        """Releases an ambulance, marking it as 'available'"""
-        if lock is None:
-            lock = AMBULANCES_FILE_LOCK
-
-        with lock:
-            with AMBULANCES_PATH.open('r', encoding='utf-8') as f:
-                data = json.load(f)
-
-            for amb in data['ambulances']:
-                if amb['id'] == ambulance_id:
-                    amb['state'] = 'available'
-                    amb['occupied_until'] = None
+                    if amb['occupied_until'] is None:
+                        amb['occupied_until'] = (now + timedelta(minutes=duration_minutes)).isoformat()
+                    else:
+                        existing_time = datetime.fromisoformat(amb['occupied_until'])
+                        new_time = existing_time + timedelta(minutes=duration_minutes)
+                        amb['occupied_until'] = new_time.isoformat()
+                        amb['selected_for_hospital'] = selected_hospital_id
                     break
 
             with AMBULANCES_PATH.open('w', encoding='utf-8') as f:
@@ -86,6 +73,7 @@ class AmbulanceStateManager:
                     if now >= occupied_until:
                         amb['state'] = 'available'
                         amb['occupied_until'] = None
+                        amb['selected_for_hospital'] = None
                         updated = True
 
             if updated:
@@ -111,8 +99,8 @@ class AmbulanceStateManager:
                     lat = float(coords.get('lat', coords.get('latitude', 0)))
                     lng = float(coords.get('lng', coords.get('longitude', 0)))
                     symb = 1 if random.random() < 0.5 else -1
-                    lat += 0.001 * symb
-                    lng += 0.001 * symb
+                    lat += 0.0001 * symb
+                    lng += 0.0001 * symb
                     amb['coordinates'] = {
                         'lat': round(lat, 6),
                         'lng': round(lng, 6),
@@ -120,8 +108,8 @@ class AmbulanceStateManager:
                 elif isinstance(coords, str):
                     lat, lng = map(float, coords.split(','))
                     symb = 1 if random.random() < 0.5 else -1
-                    lat += 0.001 * symb
-                    lng += 0.001 * symb
+                    lat += 0.0001 * symb
+                    lng += 0.0001 * symb
                     amb['coordinates'] = f"{lat:.6f},{lng:.6f}"
                 else:
                     # Preserve data if the coordinate format is unexpected
@@ -254,6 +242,7 @@ class HospitalBedManager:
                 with HOSPITALS_PATH.open('w', encoding='utf-8') as f:
                     json.dump(data, f, indent=2)
 
+
 class AssignAmbulanceInput(BaseModel):
     ambulance_id: Union[int, str] = Field(
         ...,
@@ -261,7 +250,7 @@ class AssignAmbulanceInput(BaseModel):
     )
     duration_minutes: Union[int, str] = Field(
         ...,
-        description="Total mission duration in minutes (must be a computed integer, not an expression)"
+        description="Total mission duration in minutes"
     )
 
     # mode='before' → the validator runs BEFORE Pydantic attempts to cast the type,
@@ -276,25 +265,10 @@ class AssignAmbulanceInput(BaseModel):
     def parse_duration_minutes(cls, v):
         return _parse_int_field(v, 'duration_minutes')
 
-class AmbulanceEtaInput(BaseModel):
-    ambulances_addresses: str = Field(
-        ...,
-        description=(
-            'A JSON-formatted string mapping ambulance names to their current coordinates. '
-            'Example: \'{"Ambulance 1": "39.3505,16.2466", "Ambulance 2": "39.3585,16.2373"}\''
-        )
-    )
-    patient_address: str = Field(
-        ...,
-        description="The exact address or location of the patient."
-    )
-
 class AssignAmbulanceTool(BaseTool):
     name: str = "assign_ambulance"
     description: str = (
-        "Marks an ambulance as occupied for the total duration of the mission. "
-        "Requires the ambulance numeric ID and the total mission time in minutes "
-        "(travel + on-site + hospital). Always pass pre-computed integers, never expressions."
+        "Marks an ambulance as occupied for the ETA given."
     )
     args_schema: Type[BaseModel] = AssignAmbulanceInput
 
@@ -305,7 +279,15 @@ class AssignAmbulanceTool(BaseTool):
             f"✓ Ambulance {ambulance_id} successfully assigned and marked as "
             f"occupied for {duration_minutes} minutes."
         )
-    
+
+
+
+class AmbulanceEtaInput(BaseModel):
+    patient_address: str = Field(
+        ...,
+        description="The exact address or location of the patient."
+    )    
+
 class AmbulanceEtaTool(BaseTool):
     name: str = "Google Maps Traffic ETA Calculator"
     description: str = (
@@ -315,10 +297,20 @@ class AmbulanceEtaTool(BaseTool):
     )
     args_schema: Type[BaseModel] = AmbulanceEtaInput
 
-    def _run(self, ambulances_addresses: str, patient_address: str) -> str:
+    def _run(self, patient_address: str) -> str:
         try:
-            
-            amb_dict = json.loads(ambulances_addresses)
+            with AMBULANCES_FILE_LOCK:
+                with AMBULANCES_PATH.open('r', encoding='utf-8') as f:
+                    ambulances_data = json.load(f)
+
+            amb_dict = {
+                amb["name"]: f"{amb['coordinates']['lat']},{amb['coordinates']['lng']}"
+                for amb in ambulances_data["ambulances"]
+                if amb["state"] == "available"
+            }
+
+            if not amb_dict:
+                return "Error: No available ambulances at this time to calculate ETA."
 
             
             fastest: float = float('inf')
@@ -405,20 +397,11 @@ class AmbulanceEtaTool(BaseTool):
             
         except Exception as e:
             return f"Error during route calculation: {str(e)}. Make sure the input is a valid JSON string."
-        
+
 
 class HospitalLocatorInput(BaseModel):
     """Input schema for the Hospital Locator Tool"""
 
-    hospitals_addresses: str = Field(
-        ...,
-        description=(
-            'A JSON-formatted string mapping hospital names to their current coordinates, '
-            'available beds, and specialties. Example: '
-            '{"Hospital A": "39.3505,16.2466|4|Cardiology,Trauma", '
-            '"Hospital B": "39.3585,16.2373|2|Emergency Medicine"}'
-        )
-    )
     patient_address: str = Field(
         ...,
         description="The exact address or location of the patient."
@@ -427,31 +410,6 @@ class HospitalLocatorInput(BaseModel):
         ...,
         description="The medical specialty required (e.g., Cardiology, Trauma, Emergency Medicine)."
     )
-
-
-def _parse_hospital_entry(name: str, value: str) -> dict[str, object]:
-    """Parse a hospital entry from the combined string format."""
-    parts = [part.strip() for part in value.split("|")]
-    coord_part = parts[0] if parts else ""
-    lat_lng = coord_part.split(",") if "," in coord_part else ["", ""]
-    latitude = float(lat_lng[0].strip()) if lat_lng[0] else 0.0
-    longitude = float(lat_lng[1].strip()) if len(lat_lng) > 1 else 0.0
-
-    available_beds = None
-    specialties = []
-    if len(parts) > 1 and parts[1].isdigit():
-        available_beds = int(parts[1])
-    if len(parts) > 2:
-        specialties = [s.strip() for s in parts[2].split(",") if s.strip()]
-
-    return {
-        "name": name,
-        "latitude": latitude,
-        "longitude": longitude,
-        "available_beds": available_beds,
-        "specialties": specialties,
-    }
-
 
 class HospitalLocatorTool(BaseTool):
     name: str = "Hospital Locator Tool"
@@ -464,15 +422,24 @@ class HospitalLocatorTool(BaseTool):
 
     def _run(
         self,
-        hospitals_addresses: str,
         patient_address: str,
         required_specialty: str,
     ) -> str:
         try:
-            hospitals_raw = json.loads(hospitals_addresses)
+            with HOSPITALS_FILE_LOCK:
+                with HOSPITALS_PATH.open('r', encoding='utf-8') as f:
+                    hospitals_data = json.load(f)
+
             hospitals = [
-                _parse_hospital_entry(name, value)
-                for name, value in hospitals_raw.items()
+                {
+                    "id": hosp["id"],
+                    "name": hosp["name"],
+                    "latitude": hosp["coordinates"]["lat"],
+                    "longitude": hosp["coordinates"]["lng"],
+                    "available_beds": hosp["capacity"]["available_beds"],
+                    "specialties": hosp["specialties"]
+                }
+                for hosp in hospitals_data["hospitals"]
             ]
 
             specialty_lower = required_specialty.lower()
@@ -586,7 +553,7 @@ class HospitalLocatorTool(BaseTool):
                 time_str = f"{hours}h {remaining_minutes}m" if hours > 0 else f"{minutes}m"
 
                 report += (
-                    f"- {hospital['name']}: ETA {time_str} ({distance_km:.1f} km) | "
+                    f"- {hospital['name']}: ID {hospital['id']} ETA {time_str} ({distance_km:.1f} km) | "
                     f"Available beds: {hospital['available_beds']} | "
                     f"Specialties: {', '.join(hospital['specialties'])}\n"
                 )
@@ -626,7 +593,6 @@ class ReserveHospitalBedInput(BaseModel):
     def parse_duration(cls, v):
         return _parse_int_field(v, 'duration_minutes')
 
-
 class ReserveHospitalBedTool(BaseTool):
     name: str = "reserve_hospital_bed"
     description: str = (
@@ -647,4 +613,34 @@ class ReserveHospitalBedTool(BaseTool):
         except ValueError as e:
             return f"✗ {str(e)}"
         except Exception as e:
-            return f"✗ Error reserving bed: {str(e)}"        
+            return f"✗ Error reserving bed: {str(e)}"   
+
+
+class OccupyAmbulanceInput(BaseModel):
+    ambulance_id: Union[str, int] = Field(..., description="ID as a string or integer")
+    duration_minutes: Union[str, int] = Field(..., description="Minutes as a string or integer")
+    selected_hospital_id: Union[str, int] = Field(..., description="Hospital ID as a string or integer")
+
+    @field_validator('ambulance_id', 'duration_minutes', 'selected_hospital_id', mode='before')
+    @classmethod
+    def parse_all(cls, v):
+        return _parse_int_field(v, 'field')
+
+class OccupyAmbulanceTool(BaseTool):
+    name: str = "occupy_ambulance_for_hospital"
+    description: str = (
+        "Updates an existing ambulance mission. "
+        "Call this tool to add the travel time to the hospital to the ambulance and record the hospital ID. "
+        "Arguments: ambulance_id, duration_minutes, selected_hospital_id."
+    )
+    args_schema: Type[BaseModel] = OccupyAmbulanceInput
+
+    def _run(self, ambulance_id: Union[str, int], duration_minutes: Union[str, int], selected_hospital_id: Union[str, int]) -> str:
+        try:
+            
+            AmbulanceStateManager.assign_ambulance(int(ambulance_id), int(duration_minutes), int(selected_hospital_id))
+            return (
+                f"✓ Added time to reach the nearest hospital - {duration_minutes} minutes from patient to Hospital {selected_hospital_id} - to Ambulance {ambulance_id}."
+            )
+        except Exception as e:
+            return f"✗ Error marking ambulance {ambulance_id} as occupied for Hospital {selected_hospital_id}: {str(e)}"     

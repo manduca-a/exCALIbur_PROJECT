@@ -6,9 +6,10 @@ authors = [{ name = "Your Name", email = "you@example.com" }]
 requires-python = ">=3.10,<3.14"
 dependencies = [
     "botocore>=1.43.14",
-    "crewai[tools]==1.14.5",
+    "crewai[tools]==1.14.4",
+    "crewai-cli>=1.14.4",
     "googlemaps>=4.10.0",
-    "langchain-groq>=1.1.2",
+    "groq>=1.2.0",
     "litellm>=1.84.0",
     "openai>=2.36.0",
     "python-dotenv>=1.2.2",

@@ -1,16 +1,17 @@
 {
   "hospitals": [
     {
+      "id": 1,
       "name": "Ospedale Annunziata",
       "coordinates": {
-        "lat": 39.29372474588655,
-        "lng": 16.24845651575356
+        "lat": 39.2937,
+        "lng": 16.2484
       },
       "capacity": {
         "total_beds": 100,
-        "available_beds": 20
+        "available_beds": 16
       },
-      "current_patients": 80,
+      "current_patients": 84,
       "reserved_until": [],
       "specialties": [
         "Cardiology",
@@ -20,21 +21,143 @@
       ]
     },
     {
+      "id": 2,
       "name": "Centro Sanitario Unical",
       "coordinates": {
-        "lat": 39.36436850071403,
-        "lng": 16.225999677909275
+        "lat": 39.3643,
+        "lng": 16.2259
       },
       "capacity": {
         "total_beds": 150,
-        "available_beds": 30
+        "available_beds": 25
       },
-      "current_patients": 120,
+      "current_patients": 125,
       "reserved_until": [],
       "specialties": [
         "Pediatrics",
         "Oncology",
         "Emergency Medicine"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Ospedale di Rende",
+      "coordinates": {
+        "lat": 39.3496,
+        "lng": 16.2309
+      },
+      "capacity": {
+        "total_beds": 80,
+        "available_beds": 11
+      },
+      "current_patients": 69,
+      "reserved_until": [
+        "2026-05-24T18:56:21.748994"
+      ],
+      "specialties": [
+        "General Surgery",
+        "Internal Medicine",
+        "Respiratory Medicine"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Clinica Madonna della Catena",
+      "coordinates": {
+        "lat": 39.3105,
+        "lng": 16.2412
+      },
+      "capacity": {
+        "total_beds": 60,
+        "available_beds": 8
+      },
+      "current_patients": 52,
+      "reserved_until": [],
+      "specialties": [
+        "Orthopedics",
+        "Rehabilitation",
+        "Geriatrics"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Presidio Ospedaliero di Castrovillari",
+      "coordinates": {
+        "lat": 39.8115,
+        "lng": 16.2084
+      },
+      "capacity": {
+        "total_beds": 120,
+        "available_beds": 19
+      },
+      "current_patients": 101,
+      "reserved_until": [
+        "2026-05-24T19:27:27.502556"
+      ],
+      "specialties": [
+        "Trauma",
+        "Cardiology",
+        "Urology",
+        "General Surgery"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Presidio Ospedaliero Giovanni Paolo II - Lamezia Terme",
+      "coordinates": {
+        "lat": 38.9667,
+        "lng": 16.3134
+      },
+      "capacity": {
+        "total_beds": 200,
+        "available_beds": 40
+      },
+      "current_patients": 160,
+      "reserved_until": [],
+      "specialties": [
+        "Trauma",
+        "General Surgery",
+        "Cardiology",
+        "Neurology",
+        "Radiology"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "Ospedale San Giovanni di Dio - Crotone",
+      "coordinates": {
+        "lat": 39.0833,
+        "lng": 17.1167
+      },
+      "capacity": {
+        "total_beds": 180,
+        "available_beds": 35
+      },
+      "current_patients": 145,
+      "reserved_until": [],
+      "specialties": [
+        "Trauma",
+        "Internal Medicine",
+        "Obstetrics and Gynecology",
+        "Oncology"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "Clinica Sant'Anna - Crotone",
+      "coordinates": {
+        "lat": 39.07,
+        "lng": 17.12
+      },
+      "capacity": {
+        "total_beds": 50,
+        "available_beds": 10
+      },
+      "current_patients": 40,
+      "reserved_until": [],
+      "specialties": [
+        "Cardiology",
+        "Rehabilitation"
       ]
     }
   ]
