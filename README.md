@@ -15,9 +15,13 @@ Powered by [CrewAI](https://crewai.com), the system orchestrates a team of speci
 - **Concurrent Phone Line Simulator**: Simulates real-time incoming emergency calls using background daemon threads. Each call is parsed and routed in parallel to avoid blocking the main telephone line.
 - **Live Traffic Integration**: Uses the Google Maps Distance Matrix / Routes API to compute real-time travel times (ETAs) and routing distances under current traffic conditions.
 - **Smart Fleet & Bed Capacity Management**:
-  - Dynamically assigns and locks ambulances and hospital beds to prevent double-booking.
+  - **Direct JSON State Tracking**: Tools read live coordinates and capacities directly from `ambulances.json` and `hospitals.json` files on disk, ensuring maximum speed, decoupling from LLM state limitations, and preventing race conditions.
+  - **Dynamic Ambulance Locking (Cumulative Mission Duration)**: Ambulance occupancy time is calculated dynamically and updated in stages:
+    1. First, the dispatcher tool calculates the traffic-aware travel time from the ambulance's initial location to the patient, marking the unit as occupied for that duration.
+    2. Second, the hospital locator tool calculates the travel time from the patient to the chosen hospital and updates the ambulance's occupancy, adding this leg's duration.
+    This guarantees that the ambulance is locked for the exact sum of times required to complete the full mission.
   - **Background Fleet Mover**: Simulates available ambulances moving dynamically through the city by shifting coordinates every 10 seconds.
-  - **Background Fleet/Bed Release Checkers**: Periodically checks and frees occupied ambulances (every 30 seconds) and reserved hospital beds (every 60 seconds) once their estimated mission durations expire.
+  - **Background Fleet/Bed Release Checkers**: Periodically checks and frees occupied ambulances (every 30 seconds) and reserved hospital beds (every 60 seconds) once their cumulative mission/reservation durations expire.
 - **Ambulance State Reset on Shutdown**: On system exit (`Ctrl+C`), a graceful shutdown hook catches the interrupt, stops all background processes, and runs a reset operation to restore all ambulance states in `ambulances.json` to `"available"`.
 - **Token Usage Optimization**: Refactored to perform direct disk reads for coordinates and hospital capacities rather than interpolating large JSON structures into LLM context prompts, reducing token consumption by over 50%.
 - **Robust Field Validation**: Pydantic models validate input arguments (e.g., parsing math expressions or text representations of numbers into clean integers) for all custom tools.
@@ -115,14 +119,14 @@ graph TD
 1. **Intake & Analysis Phase** (*Emergency Call Intake Specialist*):
    - Extracts exact patient address, coordinates/landmarks, injury type, and severity.
 2. **Dispatch Phase** (*Expert Ambulance Fleet Dispatcher*):
-   - Queries the Google Maps Traffic ETA Calculator using the extracted location.
-   - Calculates the travel time for all available ambulances based on live traffic.
-   - Calls `assign_ambulance` to mark the fastest ambulance as occupied.
+   - Queries the Google Maps Traffic ETA Calculator using the extracted patient address. *This tool reads available ambulance data directly from the local JSON file.*
+   - Calculates the traffic-aware travel time from each available ambulance to the patient.
+   - Calls the `assign_ambulance` tool to mark the fastest ambulance as occupied for this initial leg of the trip.
 3. **Routing & Hospital Selection Phase** (*Emergency Hospital Locator Specialist*):
-   - Computes travel matrix from patient location to hospitals matching the required specialty.
-   - Selects the optimal hospital with available beds.
-   - Calls `reserve_hospital_bed` (decrements available beds and schedules release).
-   - Calls `occupy_ambulance_for_hospital` to update the ambulance mission with the travel time to the hospital.
+   - Computes travel matrix from the patient's location to candidate hospitals matching the required specialty. *This tool reads hospital capacity and specializations directly from the local JSON file.*
+   - Selects the optimal hospital with available bed capacity.
+   - Calls the `reserve_hospital_bed` tool to decrement available beds and schedule their release.
+   - Calls the `occupy_ambulance_for_hospital` tool to update the ambulance's mission, adding the second leg's travel time (patient to the hospital) to the overall ambulance occupancy duration.
 4. **Rehabilitation Planning Phase** (*Post-Treatment Medical Rehabilitation Coordinator*):
    - Synthesizes intake records, response timing, and injury categories.
    - Generates a personalized recovery schedule (Acute, Subacute, Outpatient recovery) for follow-up care.
