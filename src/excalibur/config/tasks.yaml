@@ -1,17 +1,3 @@
-supervision_task:
-  description: >
-    Coordinate the emergency response.
-    1. Task 'analyzer' to extract data from the call.
-    2. Task 'ambulance_dispatcher' to assign the fastest ambulance.
-    3. Task 'hospital_locator' to check the nearest available hospital.
-    4. Task 'rehabilitation_specialist' to create a recovery plan.
-    Delegate these tasks clearly to each specialist.
-    DO NOT ask for clarifications or confirmations. 
-    Assign the tasks exactly once and aggregate the results.
-  expected_output: >
-    A summary report of the entire operation.
-  agent: supervisor
-
 analysis_task:
   description: >
     Analyze the following emergency call transcription:
@@ -20,14 +6,12 @@ analysis_task:
     From the text above, extract:
     1. Patient's current location (address, intersection, landmark, or coordinates)
     2. Medical condition/category (cardiac, trauma, stroke, respiratory, etc.)
-    3. Any special requirements (mobility assistance, pediatric care, etc.)
     
     Structure the information clearly for handoff to other specialist agents.
   expected_output: >
     A structured intake assessment including:
     - Patient Location: [address or description]
     - Medical Condition Category: [type of emergency]
-    - Special Requirements: [any specific needs]
     - Call Summary: [very brief assessment]
   agent: analyzer
 

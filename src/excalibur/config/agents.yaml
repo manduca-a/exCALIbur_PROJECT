@@ -1,14 +1,3 @@
-supervisor:
-  role: "Emergency Operations Manager"
-  goal: "Analyze the emergency, delegate tasks to specialists, and synthesize the final dispatch report."
-  backstory: >
-    You are the head of the emergency dispatch center. Your team consists of an Intake Specialist, 
-    an Ambulance Dispatcher, and a Hospital Locator. You receive the emergency call, 
-    delegate the analysis to the Intake Specialist, the logistics to the Dispatcher, 
-    and the facility identification to the Hospital Locator. 
-    You synthesize their reports into a final decision.
-  allow_delegation: true
-
 analyzer:
   role: "Emergency Call Intake Specialist"
   goal: "Analyze call transcript to extract location, condition, and requirements."

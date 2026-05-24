@@ -20,14 +20,6 @@ class Excalibur():
     tasks: list[Task]
 
     @agent
-    def supervisor(self) -> Agent:
-        return Agent(
-            config=self.agents_config['supervisor'],
-            llm=big_llm,
-            verbose=False
-        )
-
-    @agent
     def analyzer(self) -> Agent:
         return Agent(
             config=self.agents_config['analyzer'],
@@ -88,12 +80,9 @@ class Excalibur():
     @crew
     def crew(self) -> Crew:
         """Creates the Excalibur crew"""
-        manager = self.supervisor()
-        workers = [agent for agent in self.agents if agent != manager]
         return Crew(
-            agents=workers,
+            agents=self.agents,
             tasks=self.tasks,
-            process=Process.hierarchical,
-            manager_agent=manager,
+            process=Process.sequential,
             verbose=True,
         )
