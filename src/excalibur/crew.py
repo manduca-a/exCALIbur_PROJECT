@@ -7,8 +7,9 @@ from .tools.custom_tool import (
     AssignAmbulanceTool,
     HospitalLocatorTool,
     ReserveHospitalBedTool,
+    OccupyAmbulanceTool
 )
-from .llm_config import groq_llm
+from .llm_config import big_llm, medium_llm, small_llm
 
 
 @CrewBase
@@ -22,7 +23,7 @@ class Excalibur():
     def analyzer(self) -> Agent:
         return Agent(
             config=self.agents_config['analyzer'],
-            llm=groq_llm,
+            llm=small_llm,
             verbose=True
         )
 
@@ -31,7 +32,7 @@ class Excalibur():
         return Agent(
             config=self.agents_config['ambulance_dispatcher'],
             tools=[AmbulanceEtaTool(), AssignAmbulanceTool()],
-            llm=groq_llm,
+            llm=big_llm,
             verbose=True
         )
 
@@ -39,8 +40,8 @@ class Excalibur():
     def hospital_locator(self) -> Agent:
         return Agent(
             config=self.agents_config['hospital_locator'],
-            tools=[HospitalLocatorTool(), ReserveHospitalBedTool()],
-            llm=groq_llm,
+            tools=[HospitalLocatorTool(), ReserveHospitalBedTool(), OccupyAmbulanceTool()],
+            llm=big_llm,
             verbose=True
         )
 
@@ -48,7 +49,7 @@ class Excalibur():
     def rehabilitation_specialist(self) -> Agent:
         return Agent(
             config=self.agents_config['rehabilitation_specialist'],
-            llm=groq_llm,
+            llm=big_llm,
             verbose=True
         )
 

@@ -29,6 +29,18 @@ HOSPITALS_PATH = ROOT_DIR / "hospitals.json"
 # Replace with inputs you want to test with, it will automatically
 # interpolate any tasks and agents information
 
+def reset_data():
+    with AMBULANCES_FILE_LOCK:
+        with AMBULANCES_PATH.open('r', encoding='utf-8') as f:
+            ambulances_data = json.load(f)
+        
+        for amb in ambulances_data["ambulances"]:
+            amb['state'] = 'available'
+            amb['occupied_until'] = None
+            amb['selected_for_hospital'] = None
+        
+        with AMBULANCES_PATH.open('w', encoding='utf-8') as f:
+            json.dump(ambulances_data, f, indent=2)
 
 def load_json_file(path: Path) -> dict:
     with path.open("r", encoding="utf-8") as file:
@@ -91,39 +103,21 @@ def process_emergency_in_parallel(call_index, call_transcription, stop_event: th
         with ambulances_file_lock:
             ambulances_data = load_json_file(AMBULANCES_PATH)
 
-        ambulances_data_str = { # Only include available ambulances, format: "Ambulance Name": "Lat,Lng"
-            amb["name"]: f"{amb['coordinates']['lat']},{amb['coordinates']['lng']}"
-            for amb in ambulances_data["ambulances"]
-            if amb["state"] == "available"
-        }
-        
-        if not ambulances_data_str:
-            print(f"[System Warning] Call #{call_index} put on hold: No ambulances available at this time.")
+        has_available_amb = any(amb["state"] == "available" for amb in ambulances_data["ambulances"])
+        if not has_available_amb:
+            print(f"\r[System Warning] Call #{call_index} put on hold: No ambulances available at this time.\n")
             return
         
         with hospitals_file_lock:
             hospitals_data = load_json_file(HOSPITALS_PATH)
 
-        # Build hospital data in the format the HospitalLocatorTool expects:
-        # "Hospital Name": "lat,lng|available_beds|specialty1,specialty2,..."
-        hospitals_data_str = {
-            hosp["name"]: (
-                f"{hosp['coordinates']['lat']},{hosp['coordinates']['lng']}"
-                f"|{hosp['capacity']['available_beds']}"
-                f"|{','.join(hosp['specialties'])}"
-            )
-            for hosp in hospitals_data["hospitals"]
-            if hosp["capacity"]["available_beds"] > 0
-        }
-
-        if not hospitals_data_str:
-            print(f"[System Warning] Call #{call_index} put on hold: No hospitals with available capacity at this time.")
+        has_available_hosp = any(hosp["capacity"]["available_beds"] > 0 for hosp in hospitals_data["hospitals"])
+        if not has_available_hosp:
+            print(f"\r[System Warning] Call #{call_index} put on hold: No hospitals with available capacity at this time.\n")
             return
 
         inputs = {
-            'call_transcription': call_transcription,
-            'ambulances': json.dumps(ambulances_data_str),
-            'hospitals': json.dumps(hospitals_data_str)
+            'call_transcription': call_transcription
         }
         
         print(f"[Thread-Call-{call_index}] Excalibur Crew is now processing Call #{call_index}...")
@@ -146,15 +140,25 @@ def phone_line_simulator(stop_event: threading.Event, first_time=True):
     
     while not stop_event.is_set():
         try:
+            if first_time:
+                seconds_to_wait = random.randint(10,15)  # Shorter wait for the first call to kick things off quickly
+                first_time = False
+                for remaining in range(seconds_to_wait, 0, -1):
+                    sys.stdout.write(f"\r[System] First emergency call will arrive in {remaining} seconds... ")
+                    sys.stdout.flush()
+                    if stop_event.wait(1):
+                        return
+            else:
+                seconds_to_wait = random.randint(90,180)                
+                sys.stdout.write(f"\r[System] Next emergency call #{call_index} will arrive in {seconds_to_wait} seconds... \n")
             
-            seconds_to_wait = random.randint(60,90)                
-            sys.stdout.write(f"\r[System] Next emergency call #{call_index} will arrive in {seconds_to_wait} seconds... ")
-            
-            if stop_event.wait(seconds_to_wait):
-                break
+                if stop_event.wait(seconds_to_wait):
+                    break
             
             print(f"[System] INCOMING EMERGENCY CALL #{call_index}")
             
+
+            time.sleep(10)  # Simulate the time it takes for the call to
             # Kicking off the Simulator Crew to autonomously generate problem descriptions and positions
             call_output = SimulatorCrew().crew().kickoff()
             call_transcription = get_text_output(call_output)
@@ -225,14 +229,18 @@ def run():
     # Keep the main process alive to allow background daemon threads to execute
     try:
         while not stop_event.is_set():
-            time.sleep(1)
+            if stop_event.wait(timeout=1):
+                break
     except KeyboardInterrupt:
+        print("\nResetting ambulance states...")
+        reset_data()
         print("Stopping the emergency management system. Shutting down process.")
         stop_event.set()
         phone_thread.join(timeout=5)
         checker_thread.join(timeout=5)
         bed_checker_thread.join(timeout=5) 
         print("Shutdown signal sent to background threads.")
+        sys.exit(0)
 
 def train():
     """

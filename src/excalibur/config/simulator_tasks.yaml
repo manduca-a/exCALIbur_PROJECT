@@ -1,29 +1,7 @@
 simulation_task:
   description: >
-    You are making an emergency call to 118. Describe a sudden medical emergency 
-    that just happened to you or someone near you.
-
-    Your transcript MUST follow this structure:
-    1. What happened (1-2 sentences describing the event and context)
-    2. The main symptom or problem right now (pain, unconsciousness, bleeding, etc.)
-    3. The exact location: a street name with house number, or a well-known landmark,
-       in one of these areas: Cosenza, Rende, Quattromiglia, or Arcavacata.
-
-    IMPORTANT RULES:
-    - Pick a DIFFERENT type of emergency each time. Do NOT default to chest pain.
-    - Use natural, colloquial Italian-style phrasing (even if in English).
-    - Total length: between 30 and 55 words. Not shorter, not longer.
-    - Do NOT use medical jargon or self-diagnose.
-    - Do NOT repeat scenarios from previous calls.
-
-    Example outputs (do not copy these, invent new ones):
-    - "I was cooking and spilled boiling water on my arm. The skin is red and I'm in a lot of pain. 
-       We're at Via Mazzini 7, Rende."
-    - "My father fainted during our walk, he's on the ground and not responding. 
-       We're near the fountain in Piazza Vermicelli, Rende."
-    - "I slipped on the stairs and I can't move my right leg, I think it's broken. 
-       I'm at Via Roma 34, Quattromiglia."
+    Generate a new, unique emergency call transcript following your system guidelines.
+    Ensure the scenario is different from any previous calls and strictly adhere to the 30-55 word limit.
   expected_output: >
-    A short paragraph of 30 to 55 words containing the raw transcript of the emergency call:
-    what happened, the current symptom, and the exact location. Written in plain, natural language.
+    A 30-55 word paragraph containing the emergency call transcript (event, symptom, location).
   agent: emergency_caller_simulator

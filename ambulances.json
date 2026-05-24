@@ -4,61 +4,67 @@
       "id": 1,
       "name": "Ambulance 1",
       "coordinates": {
-        "lat": 39.345553,
-        "lng": 16.241699
+        "lat": 39.319453,
+        "lng": 16.215599
       },
       "state": "available",
-      "occupied_until": null
+      "occupied_until": null,
+      "selected_for_hospital": null
     },
     {
       "id": 2,
       "name": "Ambulance 2",
       "coordinates": {
-        "lat": 39.361583,
-        "lng": 16.240344
+        "lat": 39.394483,
+        "lng": 16.273244
       },
-      "state": "occupied",
-      "occupied_until": "2026-05-23T12:16:50.105772"
+      "state": "available",
+      "occupied_until": null,
+      "selected_for_hospital": null
     },
     {
       "id": 3,
       "name": "Ambulance 3",
       "coordinates": {
-        "lat": 39.35267479464905,
-        "lng": 16.23392548540471
+        "lat": 39.377075,
+        "lng": 16.258325
       },
       "state": "available",
-      "occupied_until": null
+      "occupied_until": null,
+      "selected_for_hospital": null
     },
     {
       "id": 4,
       "name": "Ambulance 4",
       "coordinates": {
-        "lat": 39.343583,
-        "lng": 16.236344
+        "lat": 39.397083,
+        "lng": 16.289844
       },
       "state": "available",
-      "occupied_until": null
+      "occupied_until": null,
+      "selected_for_hospital": null
     },
     {
       "id": 5,
       "name": "Ambulance 5",
       "coordinates": {
-        "lat": 39.344716,
-        "lng": 16.247048
+        "lat": 39.302016,
+        "lng": 16.204348
       },
       "state": "available",
-      "occupied_until": null
+      "occupied_until": null,
+      "selected_for_hospital": null
     },
     {
       "id": 6,
       "name": "Ambulance 6",
       "coordinates": {
-        "lat": 39.356652,
-        "lng": 16.241673
+        "lat": 39.405752,
+        "lng": 16.290773
       },
       "state": "available",
-      "occupied_until": null
+      "occupied_until": null,
+      "selected_for_hospital": null
     }
   ]
 }

@@ -27,12 +27,10 @@ Powered by [CrewAI](https://crewai.com), this system orchestrates multiple AI ag
 1. **Clone the repository** and navigate to the project directory
 2. **Install dependencies**:
    ```bash
-   crewai install
+   uv sync
    ```
-   Or manually: `uv sync`
-
 3. **Set up environment variables**:
-   - Copy `.env.example` to `.env`:
+   - Rename `.env.example` to `.env`:
      ```bash
      cp .env.example .env
      ```
@@ -71,12 +69,16 @@ The system expects:
 ```
 src/excalibur/
 ├── crew.py                  # Crew orchestration and agent setup
-├── main.py                  # Entry point with test inputs
+├── simulator_crew.py        # Crew for simulate emergency calls
+├── llm_config.py            # LLM configuration
 ├── config/
 │   ├── agents.yaml         # Agent definitions (Analyzer, Dispatcher)
-│   └── tasks.yaml          # Task definitions (analysis, dispatch)
-└── tools/
-    └── custom_tool.py      # Google Maps ETA Calculator tool
+│   ├── tasks.yaml          # Task definitions (analysis, dispatch)
+│   ├── simulator_agents.yaml # Agent definitions (Emergency Call Simulator)
+│   └── simulator_tasks.yaml  # Task definitions (Emergency call simulation)
+├── tools/
+│   └── custom_tool.py      # Google Maps ETA Calculator tool
+└── main.py                  # Entry point with test inputs
 
 ambulances.json             # Fleet data with ambulance locations
 hospitals.json              # Hospital locations and info (for future use)
@@ -102,7 +104,6 @@ knowledge/                  # Knowledge base for agents
 |-----|---------|-----------|
 | **GROQ_API_KEY** | LLM inference for agents | https://console.groq.com |
 | **GOOGLE_API_KEY** | Google Maps (traffic, directions) | https://console.cloud.google.com |
-| **SERPER_API_KEY** | Web search (optional) | https://serper.dev |
 
 ## Troubleshooting
 

@@ -275,6 +275,20 @@ wheels = [
 ]
 
 [[package]]
+name = "botocore"
+version = "1.43.14"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "jmespath" },
+    { name = "python-dateutil" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/78/3c/798d2f7deb118241930c7c6bcfb0b970d3f0245bf580700663199aeed2c3/botocore-1.43.14.tar.gz", hash = "sha256:b9e500737e43d2f147c9d4e23b54360335e77d4c0ba90a318f51b65e06cb8516", size = 15382604, upload-time = "2026-05-22T19:28:36.363Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/27/7e/6e64821077cd2efc4aa51b7d638fb6d48e1c7c450201c529fbaf1de8bfd3/botocore-1.43.14-py3-none-any.whl", hash = "sha256:1f4a2a95ea78c10398e78431e98c1fe47adb54a7b10a32975144c1f541186658", size = 15061424, upload-time = "2026-05-22T19:28:32.682Z" },
+]
+
+[[package]]
 name = "build"
 version = "1.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -499,7 +513,7 @@ wheels = [
 
 [[package]]
 name = "crewai"
-version = "1.14.4"
+version = "1.14.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
@@ -533,9 +547,9 @@ dependencies = [
     { name = "tomli-w" },
     { name = "uv" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d3/4b/7d99452533063c73701789bcc754185087c500a31b4007a30190c05b3cf3/crewai-1.14.4.tar.gz", hash = "sha256:384ac08cca3753ae27ad099ce629e4e8b783d72e364efa041121c7fed48be106", size = 7854110, upload-time = "2026-04-30T19:12:38.602Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d3/4b/7d99452533063c73701789bcc754185087c500a31b4007a30190c05b3cf3/crewai-1.14.5.tar.gz", hash = "sha256:384ac08cca3753ae27ad099ce629e4e8b783d72e364efa041121c7fed48be106", size = 7854110, upload-time = "2026-04-30T19:12:38.602Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/09/3a/2ec22e02bceae53153db2f3dd16e8a37c448d3b4a2d647a22bacb173e10c/crewai-1.14.4-py3-none-any.whl", hash = "sha256:a05f3cdcbcec624b532fe4acc601e553ef615dfd54f01d959f1cfeb1de718b0d", size = 1078973, upload-time = "2026-04-30T19:12:35.667Z" },
+    { url = "https://files.pythonhosted.org/packages/09/3a/2ec22e02bceae53153db2f3dd16e8a37c448d3b4a2d647a22bacb173e10c/crewai-1.14.5-py3-none-any.whl", hash = "sha256:a05f3cdcbcec624b532fe4acc601e553ef615dfd54f01d959f1cfeb1de718b0d", size = 1078973, upload-time = "2026-04-30T19:12:35.667Z" },
 ]
 
 [package.optional-dependencies]
@@ -544,8 +558,58 @@ tools = [
 ]
 
 [[package]]
+name = "crewai-cli"
+version = "1.14.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "appdirs" },
+    { name = "certifi" },
+    { name = "click" },
+    { name = "crewai-core" },
+    { name = "cryptography" },
+    { name = "httpx" },
+    { name = "packaging" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "pyjwt" },
+    { name = "python-dotenv" },
+    { name = "rich" },
+    { name = "textual" },
+    { name = "tomli" },
+    { name = "tomli-w" },
+    { name = "uv" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/00/e2/5fec7c86f561be3cf6a1766939e4e6dc8592213fd1f3a3c2228f53cbf644/crewai_cli-1.14.5.tar.gz", hash = "sha256:faf05a8ce8ba655f49a1fc61473efc439a9ad70ce0329a768de265243726e0f0", size = 107149, upload-time = "2026-05-18T19:20:46.521Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/07/3e/a8e66982d3b5a9e98ccd66cd4516c184a37f94ccb2320e7ae1d3969ed9ac/crewai_cli-1.14.5-py3-none-any.whl", hash = "sha256:0e4811a093a95a9c7a177abfdac6cb90af806cf0850efddc42072739e0bdcac9", size = 108319, upload-time = "2026-05-18T19:20:45.436Z" },
+]
+
+[[package]]
+name = "crewai-core"
+version = "1.14.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "appdirs" },
+    { name = "cryptography" },
+    { name = "httpx" },
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-exporter-otlp-proto-http" },
+    { name = "opentelemetry-sdk" },
+    { name = "packaging" },
+    { name = "portalocker" },
+    { name = "pydantic" },
+    { name = "pyjwt" },
+    { name = "rich" },
+    { name = "tomli" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/28/1a/b3ce01f4d4b7773dbd2aa21bdda9d4d3d11778dde3e6b6f4a690f5cd89f8/crewai_core-1.14.5.tar.gz", hash = "sha256:b72c0cfb953bf934b252fa826cb71c80127ccc42f9a39feb2a7a97ee8272be82", size = 19168, upload-time = "2026-05-18T19:20:48.271Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f5/52/05da585bdc287c7d9b368e6f58bf23d01a2bf20ba953370119e8cdc2d3ea/crewai_core-1.14.5-py3-none-any.whl", hash = "sha256:f2349160d10345e9096660c78ed6c5a6a9922033cd4c5e1b18dcbf8ea72a48b3", size = 27385, upload-time = "2026-05-18T19:20:47.325Z" },
+]
+
+[[package]]
 name = "crewai-tools"
-version = "1.14.4"
+version = "1.14.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "beautifulsoup4" },
@@ -557,9 +621,9 @@ dependencies = [
     { name = "tiktoken" },
     { name = "youtube-transcript-api" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b2/ea/97b6a0e61b2117f9bd2dc9adf1af1f190cd5e69cebf10c5f4fe51d5c82af/crewai_tools-1.14.4.tar.gz", hash = "sha256:fe257e63a6fbc80f834543e033b2e5799446e32d471177397496d44d73a5a7d6", size = 896834, upload-time = "2026-04-30T19:12:46.114Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b2/ea/97b6a0e61b2117f9bd2dc9adf1af1f190cd5e69cebf10c5f4fe51d5c82af/crewai_tools-1.14.5.tar.gz", hash = "sha256:fe257e63a6fbc80f834543e033b2e5799446e32d471177397496d44d73a5a7d6", size = 896834, upload-time = "2026-04-30T19:12:46.114Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2f/3d/e6a15b9521b3127a1716fa56e83b65274b661871cd2d611c3655d54a8301/crewai_tools-1.14.4-py3-none-any.whl", hash = "sha256:675af68f85b4a8c5d958767d408970a30f3c19f2f8b727fb63ef72e649ea5970", size = 811057, upload-time = "2026-04-30T19:12:43.668Z" },
+    { url = "https://files.pythonhosted.org/packages/2f/3d/e6a15b9521b3127a1716fa56e83b65274b661871cd2d611c3655d54a8301/crewai_tools-1.14.5-py3-none-any.whl", hash = "sha256:675af68f85b4a8c5d958767d408970a30f3c19f2f8b727fb63ef72e649ea5970", size = 811057, upload-time = "2026-04-30T19:12:43.668Z" },
 ]
 
 [[package]]
@@ -670,8 +734,11 @@ name = "excalibur"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "botocore" },
     { name = "crewai", extra = ["tools"] },
+    { name = "crewai-cli" },
     { name = "googlemaps" },
+    { name = "groq" },
     { name = "litellm" },
     { name = "openai" },
     { name = "python-dotenv" },
@@ -679,8 +746,11 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "crewai", extras = ["tools"], specifier = "==1.14.4" },
+    { name = "botocore", specifier = ">=1.43.14" },
+    { name = "crewai", extras = ["tools"], specifier = "==1.14.5" },
+    { name = "crewai-cli", specifier = ">=1.14.5" },
     { name = "googlemaps", specifier = ">=4.10.0" },
+    { name = "groq", specifier = ">=1.2.0" },
     { name = "litellm", specifier = ">=1.84.0" },
     { name = "openai", specifier = ">=2.36.0" },
     { name = "python-dotenv", specifier = ">=1.2.2" },
@@ -885,6 +955,23 @@ dependencies = [
     { name = "requests" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/fe/26/bca4d737a9acea25e94c19940a780bbf0be64a691f7caf3a68467d3a5838/googlemaps-4.10.0.tar.gz", hash = "sha256:3055fcbb1aa262a9159b589b5e6af762b10e80634ae11c59495bd44867e47d88", size = 33056, upload-time = "2023-01-26T16:45:02.501Z" }
+
+[[package]]
+name = "groq"
+version = "1.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anyio" },
+    { name = "distro" },
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "sniffio" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/27/51/4728c13611849ff6cf8536740ae78ba3ee5e665d67b572a47c9ead0f9788/groq-1.2.0.tar.gz", hash = "sha256:85459e27c9c17f22404349c785cd08680362cfe85e07cc060be46c4832f108c3", size = 155609, upload-time = "2026-04-18T10:43:50.68Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0c/82/748639c95c60ad8846c65b167ca611c815d06d5f67a9e73b23486dce4fdf/groq-1.2.0-py3-none-any.whl", hash = "sha256:1002060a743b27c8f86765e1bc9749c98498e961d9fe2e4902bf7804a71c3c84", size = 142334, upload-time = "2026-04-18T10:43:49.125Z" },
+]
 
 [[package]]
 name = "grpcio"
@@ -1197,6 +1284,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/d2/73/a009f41c5eed71c49bec53036c4b33555afcdee70682a18c6f66e396c039/jiter-0.13.0-graalpy312-graalpy250_312_native-macosx_11_0_arm64.whl", hash = "sha256:ff732bd0a0e778f43d5009840f20b935e79087b4dc65bd36f1cd0f9b04b8ff7f", size = 303808, upload-time = "2026-02-02T12:37:52.092Z" },
     { url = "https://files.pythonhosted.org/packages/c4/10/528b439290763bff3d939268085d03382471b442f212dca4ff5f12802d43/jiter-0.13.0-graalpy312-graalpy250_312_native-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ab44b178f7981fcaea7e0a5df20e773c663d06ffda0198f1a524e91b2fde7e59", size = 337384, upload-time = "2026-02-02T12:37:53.582Z" },
     { url = "https://files.pythonhosted.org/packages/67/8a/a342b2f0251f3dac4ca17618265d93bf244a2a4d089126e81e4c1056ac50/jiter-0.13.0-graalpy312-graalpy250_312_native-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7bb00b6d26db67a05fe3e12c76edc75f32077fb51deed13822dc648fa373bc19", size = 343768, upload-time = "2026-02-02T12:37:55.055Z" },
+]
+
+[[package]]
+name = "jmespath"
+version = "1.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d3/59/322338183ecda247fb5d1763a6cbe46eff7222eaeebafd9fa65d4bf5cb11/jmespath-1.1.0.tar.gz", hash = "sha256:472c87d80f36026ae83c6ddd0f1d05d4e510134ed462851fd5f754c8c3cbb88d", size = 27377, upload-time = "2026-01-22T16:35:26.279Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/14/2f/967ba146e6d58cf6a652da73885f52fc68001525b4197effc174321d70b4/jmespath-1.1.0-py3-none-any.whl", hash = "sha256:a5663118de4908c91729bea0acadca56526eb2698e83de10cd116ae0f4e97c64", size = 20419, upload-time = "2026-01-22T16:35:24.919Z" },
 ]
 
 [[package]]
