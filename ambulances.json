@@ -4,8 +4,8 @@
       "id": 1,
       "name": "Ambulance 1",
       "coordinates": {
-        "lat": 39.319653,
-        "lng": 16.215799
+        "lat": 39.319753,
+        "lng": 16.215899
       },
       "state": "available",
       "occupied_until": null,
@@ -15,8 +15,8 @@
       "id": 2,
       "name": "Ambulance 2",
       "coordinates": {
-        "lat": 39.394783,
-        "lng": 16.273544
+        "lat": 39.394983,
+        "lng": 16.273744
       },
       "state": "available",
       "occupied_until": null,
@@ -59,8 +59,8 @@
       "id": 6,
       "name": "Ambulance 6",
       "coordinates": {
-        "lat": 39.405652,
-        "lng": 16.290673
+        "lat": 39.405252,
+        "lng": 16.290273
       },
       "state": "available",
       "occupied_until": null,

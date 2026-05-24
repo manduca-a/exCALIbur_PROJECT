@@ -25,7 +25,7 @@ class Excalibur():
         return Agent(
             config=self.agents_config['analyzer'],
             llm=small_llm,
-            verbose=True
+            verbose=False
         )
 
     @agent
@@ -34,7 +34,7 @@ class Excalibur():
             config=self.agents_config['ambulance_dispatcher'],
             tools=[AmbulanceEtaTool(), AssignAmbulanceTool()],
             llm=big_llm,
-            verbose=True
+            verbose=False
         )
 
     @agent
@@ -43,7 +43,7 @@ class Excalibur():
             config=self.agents_config['hospital_locator'],
             tools=[HospitalLocatorTool(), ReserveHospitalBedTool(), OccupyAmbulanceTool()],
             llm=big_llm,
-            verbose=True
+            verbose=False
         )
 
     @agent
@@ -51,7 +51,7 @@ class Excalibur():
         return Agent(
             config=self.agents_config['rehabilitation_specialist'],
             llm=big_llm,
-            verbose=True
+            verbose=False
         )
 
     @task

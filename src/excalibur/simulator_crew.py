@@ -19,7 +19,7 @@ class SimulatorCrew():
     def emergency_caller_simulator(self) -> Agent:
         return Agent(
             config=self.agents_config['emergency_caller_simulator'],
-            llm=medium_llm,
+            llm=big_llm,
             verbose=False
         )
 

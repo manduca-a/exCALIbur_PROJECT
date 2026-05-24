@@ -48,11 +48,12 @@
       },
       "capacity": {
         "total_beds": 80,
-        "available_beds": 11
+        "available_beds": 10
       },
-      "current_patients": 69,
+      "current_patients": 70,
       "reserved_until": [
-        "2026-05-24T18:56:21.748994"
+        "2026-05-24T18:56:21.748994",
+        "2026-05-24T19:00:21.666477"
       ],
       "specialties": [
         "General Surgery",
