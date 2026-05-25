@@ -9,10 +9,12 @@
       },
       "capacity": {
         "total_beds": 100,
-        "available_beds": 16
+        "available_beds": 15
       },
-      "current_patients": 84,
-      "reserved_until": [],
+      "current_patients": 85,
+      "reserved_until": [
+        "2026-05-25T16:47:13.463595"
+      ],
       "specialties": [
         "Cardiology",
         "Neurology",
@@ -48,12 +50,11 @@
       },
       "capacity": {
         "total_beds": 80,
-        "available_beds": 10
+        "available_beds": 11
       },
-      "current_patients": 70,
+      "current_patients": 69,
       "reserved_until": [
-        "2026-05-24T18:56:21.748994",
-        "2026-05-24T19:00:21.666477"
+        "2026-05-25T16:34:11.602320"
       ],
       "specialties": [
         "General Surgery",
@@ -89,12 +90,10 @@
       },
       "capacity": {
         "total_beds": 120,
-        "available_beds": 19
+        "available_beds": 20
       },
-      "current_patients": 101,
-      "reserved_until": [
-        "2026-05-24T19:27:27.502556"
-      ],
+      "current_patients": 100,
+      "reserved_until": [],
       "specialties": [
         "Trauma",
         "Cardiology",
