@@ -13,7 +13,7 @@
       },
       "current_patients": 85,
       "reserved_until": [
-        "2026-05-25T16:47:13.463595"
+        "2026-05-28T13:20:27.812286"
       ],
       "specialties": [
         "Cardiology",
@@ -50,12 +50,10 @@
       },
       "capacity": {
         "total_beds": 80,
-        "available_beds": 11
+        "available_beds": 12
       },
-      "current_patients": 69,
-      "reserved_until": [
-        "2026-05-25T16:34:11.602320"
-      ],
+      "current_patients": 68,
+      "reserved_until": [],
       "specialties": [
         "General Surgery",
         "Internal Medicine",
